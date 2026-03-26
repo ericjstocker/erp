@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+psycopg2-binary
+pydantic
+python-multipart
+aiofiles
+alembic
+PyJWT
+python-dotenv
