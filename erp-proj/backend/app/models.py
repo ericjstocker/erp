@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey, Table
 from sqlalchemy.orm import relationship
+from datetime import datetime
 from .database import Base
 
 class Customer(Base):
@@ -8,6 +9,8 @@ class Customer(Base):
     name = Column(String, unique=True, index=True, nullable=False)
     contact = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     jobs = relationship('Job', back_populates='customer')
 
@@ -20,6 +23,8 @@ class Job(Base):
     received_date = Column(Date, nullable=True)
     due_date = Column(Date, nullable=True)
     status = Column(String, default='queued')
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     customer = relationship('Customer', back_populates='jobs')
     parts = relationship('Part', back_populates='job')
@@ -31,7 +36,12 @@ class Part(Base):
     job_id = Column(Integer, ForeignKey('jobs.id'), nullable=True)
     name = Column(String, nullable=False)
     blueprint_path = Column(String, nullable=True)
+    material_type = Column(String, nullable=True)
+    material_size = Column(String, nullable=True)
+    status = Column(String, default='pending')
     material_id = Column(Integer, ForeignKey('materials.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     job = relationship('Job', back_populates='parts')
     material = relationship('Material', back_populates='parts')
@@ -39,13 +49,20 @@ class Part(Base):
 class Material(Base):
     __tablename__ = 'materials'
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False)
-    spec = Column(Text, nullable=True)
+    name = Column(String, nullable=False)
+    material_type = Column(String, nullable=True)
+    material_size = Column(String, nullable=True)
+    purchase_location = Column(String, nullable=True)
+    provider_info = Column(String, nullable=True)
+    po_number = Column(String, nullable=True)
+    doc_path = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     parts = relationship('Part', back_populates='material')
 
 class PurchaseOrder(Base):
-    __tablename__ = 'purchase_orders'
+    __tablename__ = 'purchase_orders' 
     id = Column(Integer, primary_key=True, index=True)
     po_number = Column(String, unique=True, nullable=False)
     vendor = Column(String, nullable=True)
@@ -53,5 +70,7 @@ class PurchaseOrder(Base):
     received_date = Column(Date, nullable=True)
     total_amount = Column(String, nullable=True)
     job_id = Column(Integer, ForeignKey('jobs.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     job = relationship('Job', back_populates='purchase_orders')
