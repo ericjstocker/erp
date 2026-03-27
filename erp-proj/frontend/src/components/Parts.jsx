@@ -14,6 +14,9 @@ export default function Parts({ onSelectPart }) {
   const [filter, setFilter] = useState('')
   const [editing, setEditing] = useState(null)
   const [fileByPart, setFileByPart] = useState({})
+  const [customers, setCustomers] = useState([])
+  const [createCustFilter, setCreateCustFilter] = useState('')
+  const [editCustFilter, setEditCustFilter] = useState('')
 
   useEffect(() => {
     loadData()
@@ -21,14 +24,16 @@ export default function Parts({ onSelectPart }) {
 
   const loadData = async () => {
     try {
-      const [partsRes, jobsRes, materialsRes] = await Promise.all([
+      const [partsRes, jobsRes, materialsRes, customersRes] = await Promise.all([
         api.listParts(),
         api.listJobs(),
-        api.listMaterials()
+        api.listMaterials(),
+        api.listCustomers()
       ])
       setParts(partsRes)
       setJobs(jobsRes)
       setMaterials(materialsRes)
+      setCustomers(customersRes)
     } catch (err) {
       console.error('Error loading data:', err)
     }
@@ -102,6 +107,13 @@ export default function Parts({ onSelectPart }) {
     return job ? job.name : 'N/A'
   }
 
+  const getCustomerForJob = (jobId) => {
+    const job = jobs.find(j => j.id === jobId)
+    if (!job || !job.customer_id) return 'N/A'
+    const customer = customers.find(c => c.id === job.customer_id)
+    return customer ? customer.name : 'N/A'
+  }
+
   return (
     <div style={{ padding: '20px' }}>
       <h1>Parts</h1>
@@ -138,14 +150,26 @@ export default function Parts({ onSelectPart }) {
             />
           </div>
           <div style={{ marginBottom: '10px' }}>
-            <label>Job ID: </label>
+            <label>Customer: </label>
+            <select
+              value={createCustFilter}
+              onChange={(e) => { setCreateCustFilter(e.target.value); setJobId('') }}
+            >
+              <option value="">All Customers</option>
+              {customers.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Job: </label>
             <select
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
             >
               <option value="">Select Job (optional)</option>
-              {jobs.map(j => (
-                <option key={j.id} value={j.id}>{j.id} - {j.name}</option>
+              {(createCustFilter ? jobs.filter(j => j.customer_id === parseInt(createCustFilter)) : jobs).map(j => (
+                <option key={j.id} value={j.id}>{j.name}</option>
               ))}
             </select>
           </div>
@@ -197,6 +221,7 @@ export default function Parts({ onSelectPart }) {
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Type</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Size</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Customer</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Created</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
@@ -209,6 +234,7 @@ export default function Parts({ onSelectPart }) {
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.material_type || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.material_size || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getJobName(p.job_id)}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getCustomerForJob(p.job_id)}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.status || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.created_at ? new Date(p.created_at).toLocaleDateString() : 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
@@ -250,10 +276,17 @@ export default function Parts({ onSelectPart }) {
                 <input value={p.material_size || ''} onChange={(e) => { p.material_size = e.target.value; setParts([...parts]) }} />
               </div>
               <div style={{ marginBottom: '10px' }}>
+                <label>Customer Filter: </label>
+                <select value={editCustFilter} onChange={(e) => setEditCustFilter(e.target.value)}>
+                  <option value="">All Customers</option>
+                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: '10px' }}>
                 <label>Job: </label>
                 <select value={p.job_id || ''} onChange={(e) => { p.job_id = e.target.value ? parseInt(e.target.value) : null; setParts([...parts]) }}>
                   <option value="">No Job</option>
-                  {jobs.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
+                  {(editCustFilter ? jobs.filter(j => j.customer_id === parseInt(editCustFilter)) : jobs).map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: '10px' }}>

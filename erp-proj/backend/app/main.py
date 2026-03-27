@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -196,6 +197,18 @@ def get_material(material_id: int, db: Session = Depends(get_db), user: str = De
         raise HTTPException(status_code=404, detail='Material not found')
     return material
 
+@app.put('/materials/{material_id}', response_model=schemas.Material)
+def update_material(material_id: int, mat: schemas.MaterialCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_mat = db.query(models.Material).filter_by(id=material_id).first()
+    if not db_mat:
+        raise HTTPException(status_code=404, detail='Material not found')
+    for k, v in mat.dict(exclude_unset=True).items():
+        setattr(db_mat, k, v)
+    db.add(db_mat)
+    db.commit()
+    db.refresh(db_mat)
+    return db_mat
+
 # Purchase Orders (protected)
 @app.post('/pos', response_model=schemas.PO)
 def create_po(po: schemas.POCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
@@ -241,3 +254,12 @@ def upload_blueprint(part_id: int, file: UploadFile = File(...), db: Session = D
     db.commit()
     db.refresh(part)
     return {"part_id": part_id, "path": dest_path}
+
+@app.get('/blueprints/download/{part_id}')
+def download_blueprint(part_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    part = db.query(models.Part).filter_by(id=part_id).first()
+    if not part or not part.blueprint_path:
+        raise HTTPException(status_code=404, detail='Blueprint not found')
+    if not os.path.exists(part.blueprint_path):
+        raise HTTPException(status_code=404, detail='Blueprint file not found on disk')
+    return FileResponse(part.blueprint_path, filename=os.path.basename(part.blueprint_path))

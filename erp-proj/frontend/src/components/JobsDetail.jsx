@@ -4,6 +4,7 @@ import api from '../api'
 export default function JobsDetail({ jobId, onBack }) {
   const [job, setJob] = useState(null)
   const [parts, setParts] = useState([])
+  const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -12,18 +13,24 @@ export default function JobsDetail({ jobId, onBack }) {
 
   const loadJobData = async () => {
     try {
-      const [jobRes, partsRes] = await Promise.all([
+      const [jobRes, partsRes, customersRes] = await Promise.all([
         api.getJob(jobId),
-        api.getJobParts(jobId)
+        api.getJobParts(jobId),
+        api.listCustomers()
       ])
-      
       setJob(jobRes)
       setParts(partsRes)
+      setCustomers(customersRes)
     } catch (err) {
       console.error('Error loading job data:', err)
     } finally {
       setLoading(false)
     }
+  }
+
+  const getCustomerName = (customerId) => {
+    const c = customers.find(c => c.id === customerId)
+    return c ? c.name : 'N/A'
   }
 
   if (loading) return <div>Loading...</div>
@@ -35,7 +42,7 @@ export default function JobsDetail({ jobId, onBack }) {
       
       <h2>{job.name}</h2>
       <p><strong>Description:</strong> {job.description || 'N/A'}</p>
-      <p><strong>Customer ID:</strong> {job.customer_id || 'N/A'}</p>
+      <p><strong>Customer:</strong> {getCustomerName(job.customer_id)}</p>
       <p><strong>Due Date:</strong> {job.due_date || 'N/A'}</p>
       <p><strong>Received Date:</strong> {job.received_date || 'N/A'}</p>
       <p><strong>Status:</strong> {job.status}</p>

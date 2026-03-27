@@ -11,6 +11,7 @@ import Parts from './components/Parts'
 import PartsDetail from './components/PartsDetail'
 import POs from './components/POs'
 import Material from './components/Material'
+import MaterialDetail from './components/MaterialDetail'
 
 function AppContent() {
   const { theme, accentColor, setAccentColor, toggleTheme, currentTheme } = useTheme()
@@ -45,6 +46,9 @@ function AppContent() {
       if (selectedId.itemType === 'part') {
         return <PartsDetail partId={selectedId.id} onBack={handleBackFromDetail} />
       }
+      if (selectedId.itemType === 'material') {
+        return <MaterialDetail materialId={selectedId.id} onBack={handleBackFromDetail} />
+      }
     }
 
     // List views
@@ -60,7 +64,7 @@ function AppContent() {
       case 'pos':
         return <POs />
       case 'material':
-        return <Material />
+        return <Material onSelectMaterial={(id) => handleSelectItem(id, 'material')} />
       default:
         return <Home />
     }
