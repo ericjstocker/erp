@@ -44,16 +44,13 @@ export default function Material() {
     }
 
     try {
-      const res = await api.request('/materials', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: newMaterial.name,
-          material_type: newMaterial.material_type,
-          material_size: newMaterial.material_size,
-          purchase_location: newMaterial.purchase_location,
-          provider_info: newMaterial.provider_info,
-          po_number: newMaterial.po_number
-        })
+      const res = await api.createMaterial({
+        name: newMaterial.name,
+        material_type: newMaterial.material_type,
+        material_size: newMaterial.material_size,
+        purchase_location: newMaterial.purchase_location,
+        provider_info: newMaterial.provider_info,
+        po_number: newMaterial.po_number
       })
 
       // Upload documentation if provided

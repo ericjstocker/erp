@@ -13,8 +13,8 @@ export default function JobsDetail({ jobId, onBack }) {
   const loadJobData = async () => {
     try {
       const [jobRes, partsRes] = await Promise.all([
-        api.request(`/jobs/${jobId}`),
-        api.request(`/jobs/${jobId}/parts`)
+        api.getJob(jobId),
+        api.getJobParts(jobId)
       ])
       
       setJob(jobRes)

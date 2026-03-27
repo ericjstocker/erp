@@ -3,20 +3,36 @@ import api from '../api'
 
 export default function POs(){
   const [pos, setPos] = useState([])
+  const [jobs, setJobs] = useState([])
   const [poNumber, setPoNumber] = useState('')
   const [vendor, setVendor] = useState('')
   const [jobId, setJobId] = useState('')
   const [filter, setFilter] = useState('')
   const [editing, setEditing] = useState(null)
 
-  useEffect(()=>{ api.listPOs().then(setPos).catch(console.error) }, [])
+  useEffect(()=>{ loadData() }, [])
+
+  const loadData = async () => {
+    try {
+      const [posRes, jobsRes] = await Promise.all([
+        api.listPOs(),
+        api.listJobs()
+      ])
+      setPos(posRes)
+      setJobs(jobsRes)
+    } catch (err) {
+      console.error('Error loading data:', err)
+    }
+  }
 
   async function submit(e){
     e.preventDefault()
     try{
-      await api.createPO({ po_number: poNumber, vendor, job_id: jobId || null })
-      setPos(await api.listPOs())
+      await api.createPO({ po_number: poNumber, vendor, job_id: jobId ? parseInt(jobId) : null })
+      await loadData()
       setPoNumber('')
+      setVendor('')
+      setJobId('')
     }catch(err){ alert(err) }
   }
 
@@ -26,7 +42,7 @@ export default function POs(){
     const payload = { po_number: p.po_number, vendor: p.vendor, job_id: p.job_id }
     await api.updatePO(poId, payload)
     setEditing(null)
-    setPos(await api.listPOs())
+    await loadData()
   }
 
   return (
@@ -38,7 +54,12 @@ export default function POs(){
       <form onSubmit={submit} style={{ marginBottom: 12 }}>
         <input placeholder="PO number" value={poNumber} onChange={e=>setPoNumber(e.target.value)} required />{' '}
         <input placeholder="Vendor" value={vendor} onChange={e=>setVendor(e.target.value)} />{' '}
-        <input placeholder="Job ID (optional)" value={jobId} onChange={e=>setJobId(e.target.value)} />{' '}
+        <select value={jobId} onChange={e=>setJobId(e.target.value)}>
+          <option value="">Select Job (optional)</option>
+          {jobs.map(j => (
+            <option key={j.id} value={j.id}>{j.id} - {j.name}</option>
+          ))}
+        </select>
         <button type="submit">Create</button>
       </form>
       <ul>

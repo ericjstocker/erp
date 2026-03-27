@@ -1,20 +1,37 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../api'
+import { useTheme } from '../themeContext'
 
 export default function Home() {
+  const navigate = useNavigate()
+  const { accentColor, currentTheme } = useTheme()
   const [activeJobs, setActiveJobs] = useState([])
   const [existingJobs, setExistingJobs] = useState([])
-  const [customers, setCustomers] = useState([])
-  const [jobForm, setJobForm] = useState({
+  const [existingCustomers, setExistingCustomers] = useState([])
+  const [materials, setMaterials] = useState([])
+  
+  // Form state
+  const [newCustomer, setNewCustomer] = useState(false)
+  const [newJob, setNewJob] = useState(false)
+  
+  const [customerData, setCustomerData] = useState({
+    id: '',
+    name: '',
+    contact: '',
+    notes: ''
+  })
+  
+  const [jobData, setJobData] = useState({
+    id: '',
     name: '',
     description: '',
-    customer_id: '',
-    due_date: '',
-    received_date: '',
-    po_number: ''
+    dueDate: '',
+    receivedDate: '',
+    poNumber: ''
   })
+  
   const [parts, setParts] = useState([{ name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
-  const [selectedJobForPart, setSelectedJobForPart] = useState('')
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -23,21 +40,18 @@ export default function Home() {
 
   const loadData = async () => {
     try {
-      const [jobsRes, customersRes] = await Promise.all([
+      const [jobsRes, customersRes, materialsRes] = await Promise.all([
         api.listJobs(),
-        api.listCustomers()
+        api.listCustomers(),
+        api.listMaterials()
       ])
-      setActiveJobs(jobsRes.filter(j => j.status !== 'finished'))
       setExistingJobs(jobsRes)
-      setCustomers(customersRes)
+      setActiveJobs(jobsRes.filter(j => j.status !== 'finished'))
+      setExistingCustomers(customersRes)
+      setMaterials(materialsRes)
     } catch (err) {
       console.error('Error loading data:', err)
     }
-  }
-
-  const handleJobChange = (e) => {
-    const { name, value } = e.target
-    setJobForm(prev => ({ ...prev, [name]: value }))
   }
 
   const handlePartChange = (index, field, value) => {
@@ -45,7 +59,6 @@ export default function Home() {
     newParts[index] = { ...newParts[index], [field]: value }
     setParts(newParts)
     
-    // Add new part field if current is filled and is last
     if (index === parts.length - 1 && newParts[index].name) {
       setParts([...newParts, { name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
     }
@@ -57,24 +70,53 @@ export default function Home() {
     setParts(newParts)
   }
 
-  const submitJob = async () => {
-    if (!jobForm.name || !jobForm.customer_id) {
-      setMessage('Job name and customer are required')
-      return
-    }
-
+  const submitForm = async () => {
     try {
-      // Create job
-      const jobRes = await api.createJob({
-        name: jobForm.name,
-        description: jobForm.description,
-        customer_id: parseInt(jobForm.customer_id),
-        due_date: jobForm.due_date || null,
-        received_date: jobForm.received_date || null,
-        status: 'queued'
-      })
+      let customerId = customerData.id
+      
+      // Create new customer if needed
+      if (newCustomer) {
+        if (!customerData.name) {
+          setMessage('Customer name is required')
+          return
+        }
+        const customerRes = await api.createCustomer({
+          name: customerData.name,
+          contact: customerData.contact,
+          notes: customerData.notes
+        })
+        customerId = customerRes.id
+      } else {
+        if (!customerId) {
+          setMessage('Please select a customer')
+          return
+        }
+      }
 
-      const jobId = jobRes.id
+      let jobId
+      
+      // Create new job or use existing
+      if (newJob) {
+        if (!jobData.name) {
+          setMessage('Job name is required')
+          return
+        }
+        const jobRes = await api.createJob({
+          name: jobData.name,
+          description: jobData.description,
+          customer_id: customerId,
+          due_date: jobData.dueDate || null,
+          received_date: jobData.receivedDate || null,
+          status: 'queued'
+        })
+        jobId = jobRes.id
+      } else {
+        if (!jobData.id) {
+          setMessage('Please select a job')
+          return
+        }
+        jobId = jobData.id
+      }
 
       // Create parts
       for (const part of parts.filter(p => p.name)) {
@@ -86,7 +128,6 @@ export default function Home() {
           status: part.status
         })
 
-        // Upload blueprint if provided
         if (part.blueprint) {
           try {
             await api.uploadBlueprint(partRes.id, part.blueprint)
@@ -97,214 +138,294 @@ export default function Home() {
       }
 
       setMessage('Job and parts created successfully!')
-      setJobForm({ name: '', description: '', customer_id: '', due_date: '', received_date: '', po_number: '' })
-      setParts([{ name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
-      loadData()
+      setTimeout(() => {
+        setNewCustomer(false)
+        setNewJob(false)
+        setCustomerData({ id: '', name: '', contact: '', notes: '' })
+        setJobData({ id: '', name: '', description: '', dueDate: '', receivedDate: '', poNumber: '' })
+        setParts([{ name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
+        loadData()
+      }, 1500)
     } catch (err) {
       setMessage(`Error: ${err.message}`)
     }
   }
 
-  const submitPart = async () => {
-    if (!selectedJobForPart || !parts[0].name) {
-      setMessage('Select a job and enter part name')
-      return
-    }
+  const boxStyle = {
+    border: `2px solid ${accentColor}`,
+    borderRadius: '8px',
+    padding: '20px',
+    backgroundColor: currentTheme.bg,
+    marginBottom: '20px'
+  }
 
-    try {
-      for (const part of parts.filter(p => p.name)) {
-        await api.createPart({
-          job_id: parseInt(selectedJobForPart),
-          name: part.name,
-          material_type: part.material_type,
-          material_size: part.material_size,
-          status: part.status
-        })
-      }
+  const inputStyle = {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '10px',
+    border: `1px solid ${accentColor}`,
+    borderRadius: '4px',
+    boxSizing: 'border-box',
+    backgroundColor: currentTheme.input,
+    color: currentTheme.text,
+    fontFamily: 'inherit'
+  }
 
-      setMessage('Parts added to job successfully!')
-      setParts([{ name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
-      setSelectedJobForPart('')
-      loadData()
-    } catch (err) {
-      setMessage(`Error: ${err.message}`)
-    }
+  const selectStyle = {
+    ...inputStyle,
+    appearance: 'auto',
+    cursor: 'pointer'
+  }
+
+  const buttonStyle = {
+    width: '100%',
+    padding: '10px',
+    backgroundColor: accentColor,
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    marginTop: '10px'
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Home - Active Jobs</h1>
+    <div style={{ padding: '20px', color: currentTheme.text }}>
+      <h2>Dashboard</h2>
 
-      {/* Active Jobs List */}
-      <div style={{ marginBottom: '30px', padding: '10px', border: '1px solid #ddd' }}>
-        <h2>Active Jobs ({activeJobs.length})</h2>
-        {activeJobs.length === 0 ? (
-          <p>No active jobs</p>
-        ) : (
-          <ul>
-            {activeJobs.map(job => (
-              <li key={job.id}>
-                <strong>{job.name}</strong> - Customer: {job.customer_id} | Due: {job.due_date} | Status: {job.status}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {message && (
+        <div style={{
+          padding: '10px',
+          marginBottom: '20px',
+          backgroundColor: message.includes('Error') ? '#ffcccc' : '#ccffcc',
+          border: '1px solid gray',
+          borderRadius: '4px'
+        }}>
+          {message}
+        </div>
+      )}
 
-      {/* New Job Form */}
-      <div style={{ marginBottom: '30px', padding: '15px', border: '2px solid #0066cc', borderRadius: '5px' }}>
-        <h2>Create New Job</h2>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Customer: </label>
-          <select name="customer_id" value={jobForm.customer_id} onChange={handleJobChange} required>
-            <option value="">Select Customer</option>
-            {customers.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+      {/* New Job/Part Form */}
+      <div style={boxStyle}>
+        <h3>New Job / Add Parts</h3>
+
+        {/* Customer Section */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={newCustomer}
+              onChange={(e) => {
+                setNewCustomer(e.target.checked)
+                if (!e.target.checked) {
+                  setCustomerData({ id: '', name: '', contact: '', notes: '' })
+                }
+              }}
+              style={{ marginRight: '10px', cursor: 'pointer' }}
+            />
+            <span>New customer?</span>
+          </label>
+
+          {!newCustomer ? (
+            <select
+              value={customerData.id}
+              onChange={(e) => {
+                const customer = existingCustomers.find(c => c.id.toString() === e.target.value)
+                setCustomerData(customer ? { ...customer } : { id: '', name: '', contact: '', notes: '' })
+              }}
+              style={selectStyle}
+            >
+              <option value="">Select Customer</option>
+              {existingCustomers.map(c => (
+                <option key={c.id} value={c.id}>{c.id} - {c.name}</option>
+              ))}
+            </select>
+          ) : (
+            <>
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={customerData.name}
+                onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })}
+                style={inputStyle}
+              />
+              <input
+                type="text"
+                placeholder="Customer Contact"
+                value={customerData.contact}
+                onChange={(e) => setCustomerData({ ...customerData, contact: e.target.value })}
+                style={inputStyle}
+              />
+              <textarea
+                placeholder="Customer Notes"
+                value={customerData.notes}
+                onChange={(e) => setCustomerData({ ...customerData, notes: e.target.value })}
+                style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
+              />
+            </>
+          )}
         </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Job Name: </label>
-          <input type="text" name="name" value={jobForm.name} onChange={handleJobChange} placeholder="Enter job name" required />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Description: </label>
-          <textarea name="description" value={jobForm.description} onChange={handleJobChange} placeholder="Job description" />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Due Date: </label>
-          <input type="date" name="due_date" value={jobForm.due_date} onChange={handleJobChange} />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Received Date: </label>
-          <input type="date" name="received_date" value={jobForm.received_date} onChange={handleJobChange} />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>PO#: </label>
-          <input type="text" name="po_number" value={jobForm.po_number} onChange={handleJobChange} placeholder="Purchase order number" />
+
+        {/* Job Section */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={newJob}
+              onChange={(e) => {
+                setNewJob(e.target.checked)
+                if (!e.target.checked) {
+                  setJobData({ id: '', name: '', description: '', dueDate: '', receivedDate: '', poNumber: '' })
+                }
+              }}
+              style={{ marginRight: '10px', cursor: 'pointer' }}
+            />
+            <span>New Job?</span>
+          </label>
+
+          {!newJob ? (
+            <select
+              value={jobData.id}
+              onChange={(e) => {
+                const job = existingJobs.find(j => j.id.toString() === e.target.value)
+                setJobData(job ? { ...job, id: job.id } : { id: '', name: '', description: '', dueDate: '', receivedDate: '', poNumber: '' })
+              }}
+              style={selectStyle}
+            >
+              <option value="">Select Job</option>
+              {activeJobs.map(j => (
+                <option key={j.id} value={j.id}>{j.id} - {j.name}</option>
+              ))}
+            </select>
+          ) : (
+            <>
+              <input
+                type="text"
+                placeholder="Job Name"
+                value={jobData.name}
+                onChange={(e) => setJobData({ ...jobData, name: e.target.value })}
+                style={inputStyle}
+              />
+              <textarea
+                placeholder="Description"
+                value={jobData.description}
+                onChange={(e) => setJobData({ ...jobData, description: e.target.value })}
+                style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
+              />
+              <input
+                type="date"
+                value={jobData.dueDate}
+                onChange={(e) => setJobData({ ...jobData, dueDate: e.target.value })}
+                style={inputStyle}
+              />
+              <input
+                type="date"
+                value={jobData.receivedDate}
+                onChange={(e) => setJobData({ ...jobData, receivedDate: e.target.value })}
+                style={inputStyle}
+              />
+              <input
+                type="text"
+                placeholder="PO Number"
+                value={jobData.poNumber}
+                onChange={(e) => setJobData({ ...jobData, poNumber: e.target.value })}
+                style={inputStyle}
+              />
+            </>
+          )}
         </div>
 
         {/* Parts Section */}
-        <h3>Parts for this Job</h3>
-        {parts.map((part, idx) => (
-          <div key={idx} style={{ padding: '10px', marginBottom: '10px', backgroundColor: '#f5f5f5', borderRadius: '3px' }}>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Part Name: </label>
-              <input 
-                type="text" 
-                value={part.name} 
-                onChange={(e) => handlePartChange(idx, 'name', e.target.value)} 
-                placeholder="Enter part name"
+        <div style={{ marginBottom: '20px' }}>
+          <h4 style={{ marginTop: '20px' }}>Parts</h4>
+          {parts.map((part, index) => (
+            <div key={index} style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: `1px solid ${accentColor}` }}>
+              <input
+                type="text"
+                placeholder="Part Name"
+                value={part.name}
+                onChange={(e) => handlePartChange(index, 'name', e.target.value)}
+                style={inputStyle}
               />
-            </div>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Material Type: </label>
-              <input 
-                type="text" 
-                value={part.material_type} 
-                onChange={(e) => handlePartChange(idx, 'material_type', e.target.value)} 
-                placeholder="e.g., Steel, Aluminum"
-              />
-            </div>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Material Size: </label>
-              <input 
-                type="text" 
-                value={part.material_size} 
-                onChange={(e) => handlePartChange(idx, 'material_size', e.target.value)} 
-                placeholder="e.g., 10x10x5"
-              />
-            </div>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Status: </label>
-              <select value={part.status} onChange={(e) => handlePartChange(idx, 'status', e.target.value)}>
-                <option value="pending">Pending</option>
-                <option value="in-progress">In Progress</option>
+              <select
+                value={part.material_type}
+                onChange={(e) => handlePartChange(index, 'material_type', e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">Material Type</option>
+                {materials.map(m => (
+                  <option key={m.id} value={m.material_type}>{m.material_type}</option>
+                ))}
+              </select>
+              <select
+                value={part.material_size}
+                onChange={(e) => handlePartChange(index, 'material_size', e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">Material Size</option>
+                {materials.map(m => (
+                  <option key={m.id} value={m.material_size}>{m.material_size}</option>
+                ))}
+              </select>
+              <select
+                value={part.status}
+                onChange={(e) => handlePartChange(index, 'status', e.target.value)}
+                style={selectStyle}
+              >
+                <option value="pending">Status: Pending</option>
+                <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
               </select>
+              <label style={{ display: 'block', marginTop: '8px' }}>
+                Blueprint:
+                <input
+                  type="file"
+                  onChange={(e) => handleBlueprintChange(index, e.target.files?.[0])}
+                  style={{ marginLeft: '8px' }}
+                />
+              </label>
             </div>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Blueprint: </label>
-              <input 
-                type="file" 
-                onChange={(e) => handleBlueprintChange(idx, e.target.files[0])}
-              />
-            </div>
-          </div>
-        ))}
-
-        <button onClick={submitJob} style={{ padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
-          Create Job with Parts
-        </button>
-      </div>
-
-      {/* Add Parts to Existing Job */}
-      <div style={{ padding: '15px', border: '2px solid #ff9900', borderRadius: '5px' }}>
-        <h2>Add Parts to Existing Job</h2>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Select Job: </label>
-          <select value={selectedJobForPart} onChange={(e) => setSelectedJobForPart(e.target.value)}>
-            <option value="">Select Job</option>
-            {existingJobs.map(j => (
-              <option key={j.id} value={j.id}>{j.name}</option>
-            ))}
-          </select>
+          ))}
         </div>
 
-        {/* Parts Section for Existing Job */}
-        {parts.map((part, idx) => (
-          <div key={idx} style={{ padding: '10px', marginBottom: '10px', backgroundColor: '#f5f5f5', borderRadius: '3px' }}>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Part Name: </label>
-              <input 
-                type="text" 
-                value={part.name} 
-                onChange={(e) => handlePartChange(idx, 'name', e.target.value)} 
-                placeholder="Enter part name"
-              />
-            </div>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Material Type: </label>
-              <input 
-                type="text" 
-                value={part.material_type} 
-                onChange={(e) => handlePartChange(idx, 'material_type', e.target.value)} 
-                placeholder="e.g., Steel, Aluminum"
-              />
-            </div>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Material Size: </label>
-              <input 
-                type="text" 
-                value={part.material_size} 
-                onChange={(e) => handlePartChange(idx, 'material_size', e.target.value)} 
-                placeholder="e.g., 10x10x5"
-              />
-            </div>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Status: </label>
-              <select value={part.status} onChange={(e) => handlePartChange(idx, 'status', e.target.value)}>
-                <option value="pending">Pending</option>
-                <option value="in-progress">In Progress</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-            <div style={{ marginBottom: '5px' }}>
-              <label>Blueprint: </label>
-              <input 
-                type="file" 
-                onChange={(e) => handleBlueprintChange(idx, e.target.files[0])}
-              />
-            </div>
-          </div>
-        ))}
-
-        <button onClick={submitPart} style={{ padding: '10px 20px', backgroundColor: '#ff9900', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
-          Add Parts to Selected Job
+        <button onClick={submitForm} style={buttonStyle}>
+          Submit
         </button>
       </div>
 
-      {message && <p style={{ marginTop: '20px', padding: '10px', backgroundColor: '#ffffcc', border: '1px solid #cccc00', borderRadius: '3px' }}>{message}</p>}
+      {/* Active Jobs List */}
+      <div style={{ marginTop: '20px' }}>
+        <h3>Active Jobs</h3>
+        {activeJobs.length === 0 ? (
+          <p>No active jobs</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: currentTheme.hover }}>
+                <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>ID</th>
+                <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>Name</th>
+                <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>Customer</th>
+                <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>Status</th>
+                <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeJobs.map(job => (
+                <tr key={job.id}>
+                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.id}</td>
+                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.name}</td>
+                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.customer_id}</td>
+                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.status}</td>
+                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>
+                    <button onClick={() => navigate(`/jobs/${job.id}`)}>View</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   )
 }

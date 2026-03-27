@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import store from './store'
+import { ThemeProvider, useTheme } from './themeContext'
 import Login from './components/Login'
 import Home from './components/Home'
 import Customers from './components/Customers'
@@ -11,7 +12,8 @@ import PartsDetail from './components/PartsDetail'
 import POs from './components/POs'
 import Material from './components/Material'
 
-export default function App() {
+function AppContent() {
+  const { theme, accentColor, setAccentColor, toggleTheme, currentTheme } = useTheme()
   const [view, setView] = useState('home')
   const [loggedIn, setLoggedIn] = useState(store.isLoggedIn())
   const [selectedId, setSelectedId] = useState(null)
@@ -65,19 +67,54 @@ export default function App() {
   }
 
   return (
-    <div style={{ padding: 20, fontFamily: 'sans-serif' }}>
+    <div style={{ 
+      padding: 20, 
+      fontFamily: 'sans-serif',
+      backgroundColor: currentTheme.bg,
+      color: currentTheme.text,
+      minHeight: '100vh'
+    }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h1>Small Shop ERP</h1>
-        <button onClick={() => { store.logout(); setLoggedIn(false) }} style={{ padding: '8px 16px' }}>Logout</button>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px' }}>Theme:</label>
+            <button 
+              onClick={toggleTheme}
+              style={{ 
+                padding: '6px 12px', 
+                backgroundColor: accentColor,
+                color: 'white', 
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              {theme === 'light' ? '☀️ Light' : '🌙 Dark'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px' }}>Accent:</label>
+            <input 
+              type="color" 
+              value={accentColor} 
+              onChange={(e) => setAccentColor(e.target.value)}
+              style={{ width: '40px', height: '35px', cursor: 'pointer', border: `2px solid ${currentTheme.border}` }}
+              title="Choose accent color"
+            />
+          </div>
+          <button onClick={() => { store.logout(); setLoggedIn(false) }} style={{ padding: '8px 16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Logout</button>
+        </div>
       </div>
-      <nav style={{ marginBottom: '20px', borderBottom: '2px solid #0066cc', paddingBottom: '10px' }}>
+      <nav style={{ marginBottom: '20px', borderBottom: `2px solid ${accentColor}`, paddingBottom: '10px' }}>
         <button 
           onClick={() => { setView('home'); setDetailView(false) }} 
           style={{ 
             marginRight: '10px', 
             padding: '10px 20px', 
-            backgroundColor: view === 'home' && !detailView ? '#0066cc' : '#f0f0f0',
-            color: view === 'home' && !detailView ? 'white' : 'black',
+            backgroundColor: view === 'home' && !detailView ? accentColor : currentTheme.hover,
+            color: view === 'home' && !detailView ? 'white' : currentTheme.text,
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer'
@@ -90,8 +127,8 @@ export default function App() {
           style={{ 
             marginRight: '10px', 
             padding: '10px 20px', 
-            backgroundColor: view === 'customers' && !detailView ? '#0066cc' : '#f0f0f0',
-            color: view === 'customers' && !detailView ? 'white' : 'black',
+            backgroundColor: view === 'customers' && !detailView ? accentColor : currentTheme.hover,
+            color: view === 'customers' && !detailView ? 'white' : currentTheme.text,
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer'
@@ -104,8 +141,8 @@ export default function App() {
           style={{ 
             marginRight: '10px', 
             padding: '10px 20px', 
-            backgroundColor: view === 'jobs' && !detailView ? '#0066cc' : '#f0f0f0',
-            color: view === 'jobs' && !detailView ? 'white' : 'black',
+            backgroundColor: view === 'jobs' && !detailView ? accentColor : currentTheme.hover,
+            color: view === 'jobs' && !detailView ? 'white' : currentTheme.text,
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer'
@@ -118,8 +155,8 @@ export default function App() {
           style={{ 
             marginRight: '10px', 
             padding: '10px 20px', 
-            backgroundColor: view === 'parts' && !detailView ? '#0066cc' : '#f0f0f0',
-            color: view === 'parts' && !detailView ? 'white' : 'black',
+            backgroundColor: view === 'parts' && !detailView ? accentColor : currentTheme.hover,
+            color: view === 'parts' && !detailView ? 'white' : currentTheme.text,
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer'
@@ -132,8 +169,8 @@ export default function App() {
           style={{ 
             marginRight: '10px', 
             padding: '10px 20px', 
-            backgroundColor: view === 'pos' && !detailView ? '#0066cc' : '#f0f0f0',
-            color: view === 'pos' && !detailView ? 'white' : 'black',
+            backgroundColor: view === 'pos' && !detailView ? accentColor : currentTheme.hover,
+            color: view === 'pos' && !detailView ? 'white' : currentTheme.text,
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer'
@@ -146,8 +183,8 @@ export default function App() {
           style={{ 
             marginRight: '10px', 
             padding: '10px 20px', 
-            backgroundColor: view === 'material' && !detailView ? '#0066cc' : '#f0f0f0',
-            color: view === 'material' && !detailView ? 'white' : 'black',
+            backgroundColor: view === 'material' && !detailView ? accentColor : currentTheme.hover,
+            color: view === 'material' && !detailView ? 'white' : currentTheme.text,
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer'
@@ -160,5 +197,17 @@ export default function App() {
         {renderContent()}
       </main>
     </div>
+  )
+}
+
+export default function App() {
+  if (!store.isLoggedIn()) {
+    return <Login onLogin={() => window.location.reload()} />
+  }
+  
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   )
 }

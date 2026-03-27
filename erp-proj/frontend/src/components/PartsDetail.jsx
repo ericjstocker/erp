@@ -11,7 +11,7 @@ export default function PartsDetail({ partId, onBack }) {
 
   const loadPartData = async () => {
     try {
-      const partRes = await api.request(`/parts/${partId}`)
+      const partRes = await api.getPart(partId)
       setPart(partRes)
     } catch (err) {
       console.error('Error loading part data:', err)
