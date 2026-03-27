@@ -1,7 +1,8 @@
 import store from './store'
 
-const DEFAULT_BASE = 'http://localhost:8000'
-const BASE = import.meta.env.VITE_API_BASE || DEFAULT_BASE
+// Use VITE_API_BASE if set (e.g., /api or http://backend:8000)
+// Otherwise use same origin for external access
+const BASE = import.meta.env.VITE_API_BASE || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000')
 
 async function request(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json' }
