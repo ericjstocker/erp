@@ -28,7 +28,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_BASE: https://api.erp.ancibel.net
+      VITE_API_BASE: /api
     depends_on:
       - backend
 volumes:
