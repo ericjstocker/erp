@@ -16,7 +16,9 @@ export default function Home({ onSelectJob }) {
   const [customerData, setCustomerData] = useState({
     id: '',
     name: '',
-    contact: '',
+    point_of_contact: '',
+    phone_number: '',
+    email: '',
     notes: ''
   })
   
@@ -80,7 +82,9 @@ export default function Home({ onSelectJob }) {
         }
         const customerRes = await api.createCustomer({
           name: customerData.name,
-          contact: customerData.contact,
+          point_of_contact: customerData.point_of_contact,
+          phone_number: customerData.phone_number,
+          email: customerData.email,
           notes: customerData.notes
         })
         customerId = customerRes.id
@@ -139,7 +143,7 @@ export default function Home({ onSelectJob }) {
       setTimeout(() => {
         setNewCustomer(false)
         setNewJob(false)
-        setCustomerData({ id: '', name: '', contact: '', notes: '' })
+        setCustomerData({ id: '', name: '', point_of_contact: '', phone_number: '', email: '', notes: '' })
         setJobData({ id: '', name: '', description: '', dueDate: '', receivedDate: '', poNumber: '' })
         setParts([{ name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
         loadData()
@@ -158,15 +162,13 @@ export default function Home({ onSelectJob }) {
   }
 
   const inputStyle = {
-    width: '100%',
     padding: '8px',
-    marginBottom: '10px',
     border: `1px solid ${accentColor}`,
     borderRadius: '4px',
-    boxSizing: 'border-box',
     backgroundColor: currentTheme.input,
     color: currentTheme.text,
-    fontFamily: 'inherit'
+    fontFamily: 'inherit',
+    fontSize: '14px'
   }
 
   const selectStyle = {
@@ -217,7 +219,7 @@ export default function Home({ onSelectJob }) {
               onChange={(e) => {
                 setNewCustomer(e.target.checked)
                 if (!e.target.checked) {
-                  setCustomerData({ id: '', name: '', contact: '', notes: '' })
+                  setCustomerData({ id: '', name: '', point_of_contact: '', phone_number: '', email: '', notes: '' })
                 }
               }}
               style={{ marginRight: '10px', cursor: 'pointer' }}
@@ -230,37 +232,66 @@ export default function Home({ onSelectJob }) {
               value={customerData.id}
               onChange={(e) => {
                 const customer = existingCustomers.find(c => c.id.toString() === e.target.value)
-                setCustomerData(customer ? { ...customer } : { id: '', name: '', contact: '', notes: '' })
+                setCustomerData(customer ? { ...customer } : { id: '', name: '', point_of_contact: '', phone_number: '', email: '', notes: '' })
               }}
               style={selectStyle}
             >
               <option value="">Select Customer</option>
               {existingCustomers.map(c => (
-                <option key={c.id} value={c.id}>{c.id} - {c.name}</option>
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           ) : (
             <>
-              <input
-                type="text"
-                placeholder="Customer Name"
-                value={customerData.name}
-                onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })}
-                style={inputStyle}
-              />
-              <input
-                type="text"
-                placeholder="Customer Contact"
-                value={customerData.contact}
-                onChange={(e) => setCustomerData({ ...customerData, contact: e.target.value })}
-                style={inputStyle}
-              />
-              <textarea
-                placeholder="Customer Notes"
-                value={customerData.notes}
-                onChange={(e) => setCustomerData({ ...customerData, notes: e.target.value })}
-                style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
-              />
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Customer Name:</label>
+                <input
+                  type="text"
+                  placeholder="Customer Name"
+                  value={customerData.name}
+                  onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Point of Contact:</label>
+                <input
+                  type="text"
+                  placeholder="Contact Person Name"
+                  value={customerData.point_of_contact}
+                  onChange={(e) => setCustomerData({ ...customerData, point_of_contact: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Phone Number:</label>
+                <input
+                  type="text"
+                  placeholder="Phone Number"
+                  value={customerData.phone_number}
+                  onChange={(e) => setCustomerData({ ...customerData, phone_number: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Email:</label>
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  value={customerData.email}
+                  onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Notes:</label>
+                <textarea
+                  placeholder="Customer Notes"
+                  value={customerData.notes}
+                  onChange={(e) => setCustomerData({ ...customerData, notes: e.target.value })}
+                  style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
+                />
+              </div>
             </>
           )}
         </div>
@@ -298,38 +329,53 @@ export default function Home({ onSelectJob }) {
             </select>
           ) : (
             <>
-              <input
-                type="text"
-                placeholder="Job Name"
-                value={jobData.name}
-                onChange={(e) => setJobData({ ...jobData, name: e.target.value })}
-                style={inputStyle}
-              />
-              <textarea
-                placeholder="Description"
-                value={jobData.description}
-                onChange={(e) => setJobData({ ...jobData, description: e.target.value })}
-                style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
-              />
-              <input
-                type="date"
-                value={jobData.dueDate}
-                onChange={(e) => setJobData({ ...jobData, dueDate: e.target.value })}
-                style={inputStyle}
-              />
-              <input
-                type="date"
-                value={jobData.receivedDate}
-                onChange={(e) => setJobData({ ...jobData, receivedDate: e.target.value })}
-                style={inputStyle}
-              />
-              <input
-                type="text"
-                placeholder="PO Number"
-                value={jobData.poNumber}
-                onChange={(e) => setJobData({ ...jobData, poNumber: e.target.value })}
-                style={inputStyle}
-              />
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Job Name:</label>
+                <input
+                  type="text"
+                  placeholder="Job Name"
+                  value={jobData.name}
+                  onChange={(e) => setJobData({ ...jobData, name: e.target.value })}
+                  style={{...inputStyle, width: '100%'}}
+                />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Description:</label>
+                <textarea
+                  placeholder="Description"
+                  value={jobData.description}
+                  onChange={(e) => setJobData({ ...jobData, description: e.target.value })}
+                  style={{ ...inputStyle, minHeight: '60px', resize: 'vertical', width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Due Date:</label>
+                <input
+                  type="date"
+                  value={jobData.dueDate}
+                  onChange={(e) => setJobData({ ...jobData, dueDate: e.target.value })}
+                  style={{...inputStyle, width: '100%'}}
+                />
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Received Date:</label>
+                <input
+                  type="date"
+                  value={jobData.receivedDate}
+                  onChange={(e) => setJobData({ ...jobData, receivedDate: e.target.value })}
+                  style={{...inputStyle, width: '100%'}}
+                />
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>PO Number:</label>
+                <input
+                  type="text"
+                  placeholder="PO Number"
+                  value={jobData.poNumber}
+                  onChange={(e) => setJobData({ ...jobData, poNumber: e.target.value })}
+                  style={{...inputStyle, width: '100%'}}
+                />
+              </div>
             </>
           )}
         </div>
@@ -339,44 +385,56 @@ export default function Home({ onSelectJob }) {
           <h4 style={{ marginTop: '20px' }}>Parts</h4>
           {parts.map((part, index) => (
             <div key={index} style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: `1px solid ${accentColor}` }}>
-              <input
-                type="text"
-                placeholder="Part Name"
-                value={part.name}
-                onChange={(e) => handlePartChange(index, 'name', e.target.value)}
-                style={inputStyle}
-              />
-              <select
-                value={part.material_type}
-                onChange={(e) => handlePartChange(index, 'material_type', e.target.value)}
-                style={selectStyle}
-              >
-                <option value="">Material Type</option>
-                {materials.map(m => (
-                  <option key={m.id} value={m.material_type}>{m.material_type}</option>
-                ))}
-              </select>
-              <select
-                value={part.material_size}
-                onChange={(e) => handlePartChange(index, 'material_size', e.target.value)}
-                style={selectStyle}
-              >
-                <option value="">Material Size</option>
-                {materials.map(m => (
-                  <option key={m.id} value={m.material_size}>{m.material_size}</option>
-                ))}
-              </select>
-              <select
-                value={part.status}
-                onChange={(e) => handlePartChange(index, 'status', e.target.value)}
-                style={selectStyle}
-              >
-                <option value="pending">Status: Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-              </select>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Part Name:</label>
+                <input
+                  type="text"
+                  placeholder="Part Name"
+                  value={part.name}
+                  onChange={(e) => handlePartChange(index, 'name', e.target.value)}
+                  style={{...inputStyle, width: '100%'}}
+                />
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Material Type:</label>
+                <select
+                  value={part.material_type}
+                  onChange={(e) => handlePartChange(index, 'material_type', e.target.value)}
+                  style={{...selectStyle, width: '100%'}}
+                >
+                  <option value="">Material Type</option>
+                  {materials.map(m => (
+                    <option key={m.id} value={m.material_type}>{m.material_type}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Material Size:</label>
+                <select
+                  value={part.material_size}
+                  onChange={(e) => handlePartChange(index, 'material_size', e.target.value)}
+                  style={{...selectStyle, width: '100%'}}
+                >
+                  <option value="">Material Size</option>
+                  {materials.map(m => (
+                    <option key={m.id} value={m.material_size}>{m.material_size}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Status:</label>
+                <select
+                  value={part.status}
+                  onChange={(e) => handlePartChange(index, 'status', e.target.value)}
+                  style={{...selectStyle, width: '100%'}}
+                >
+                  <option value="pending">Status: Pending</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
               <label style={{ display: 'block', marginTop: '8px' }}>
-                Blueprint:
+                <span style={{ fontWeight: 'bold' }}>Blueprint:</span>
                 <input
                   type="file"
                   onChange={(e) => handleBlueprintChange(index, e.target.files?.[0])}

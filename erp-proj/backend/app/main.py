@@ -60,7 +60,13 @@ def login(req: LoginRequest):
 # Customers (protected)
 @app.post('/customers', response_model=schemas.Customer)
 def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
-    db_customer = models.Customer(name=customer.name, contact=customer.contact, notes=customer.notes)
+    db_customer = models.Customer(
+        name=customer.name,
+        point_of_contact=customer.point_of_contact,
+        phone_number=customer.phone_number,
+        email=customer.email,
+        notes=customer.notes
+    )
     db.add(db_customer)
     db.commit()
     db.refresh(db_customer)
@@ -70,6 +76,18 @@ def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_
 @app.get('/customers', response_model=List[schemas.Customer])
 def list_customers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     return db.query(models.Customer).offset(skip).limit(limit).all()
+
+@app.put('/customers/{customer_id}', response_model=schemas.Customer)
+def update_customer(customer_id: int, customer: schemas.CustomerCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_customer = db.query(models.Customer).filter_by(id=customer_id).first()
+    if not db_customer:
+        raise HTTPException(status_code=404, detail='Customer not found')
+    for k, v in customer.dict(exclude_unset=True).items():
+        setattr(db_customer, k, v)
+    db.add(db_customer)
+    db.commit()
+    db.refresh(db_customer)
+    return db_customer
 
 @app.get('/customers/{customer_id}', response_model=schemas.Customer)
 def get_customer(customer_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):

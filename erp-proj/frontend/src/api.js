@@ -31,6 +31,7 @@ export const api = {
   getCustomer: (id) => request(`/customers/${id}`),
   getCustomerJobs: (id) => request(`/customers/${id}/jobs`),
   createCustomer: (body) => request('/customers', { method: 'POST', body: JSON.stringify(body) }),
+  updateCustomer: (id, body) => request(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   listJobs: () => request('/jobs'),
   getJob: (id) => request(`/jobs/${id}`),
   getJobParts: (id) => request(`/jobs/${id}/parts`),

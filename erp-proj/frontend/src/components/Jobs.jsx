@@ -50,7 +50,13 @@ export default function Jobs({ onSelectJob }) {
   async function saveEdit(jobId) {
     const job = jobs.find(j => j.id === jobId)
     if (!job) return
-    const payload = { name: job.name, description: job.description, customer_id: job.customer_id, status: job.status }
+    const payload = { 
+      name: job.name, 
+      description: job.description, 
+      customer_id: job.customer_id || null,
+      due_date: job.due_date || null,
+      status: job.status 
+    }
     try {
       await api.updateJob(jobId, payload)
       setEditing(null)
@@ -63,6 +69,11 @@ export default function Jobs({ onSelectJob }) {
   const filteredJobs = jobs.filter(j =>
     j.name.toLowerCase().includes(filter.toLowerCase())
   )
+
+  const getCustomerName = (customerId) => {
+    const customer = customers.find(c => c.id === customerId)
+    return customer ? customer.name : 'N/A'
+  }
 
   return (
     <div style={{ padding: '20px' }}>
@@ -120,7 +131,7 @@ export default function Jobs({ onSelectJob }) {
           <thead>
             <tr style={{ backgroundColor: '#f0f0f0' }}>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job Name</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Customer ID</th>
+              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Customer</th>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Due Date</th>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Created</th>
@@ -131,8 +142,8 @@ export default function Jobs({ onSelectJob }) {
             {filteredJobs.map(j => (
               <tr key={j.id} style={{ cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.name}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.customer_id || 'N/A'}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.due_date || 'N/A'}</td>
+                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getCustomerName(j.customer_id)}</td>
+                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.due_date ? new Date(j.due_date).toLocaleDateString() : 'N/A'}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.status}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
@@ -164,6 +175,19 @@ export default function Jobs({ onSelectJob }) {
               <div style={{ marginBottom: '10px' }}>
                 <label>Job Name: </label>
                 <input value={j.name} onChange={(e) => { j.name = e.target.value; setJobs([...jobs]) }} />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label>Customer: </label>
+                <select value={j.customer_id || ''} onChange={(e) => { j.customer_id = e.target.value ? parseInt(e.target.value) : null; setJobs([...jobs]) }}>
+                  <option value="">Select Customer</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label>Due Date: </label>
+                <input type="date" value={j.due_date || ''} onChange={(e) => { j.due_date = e.target.value || null; setJobs([...jobs]) }} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Status: </label>

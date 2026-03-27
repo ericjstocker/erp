@@ -97,6 +97,11 @@ export default function Parts({ onSelectPart }) {
     p.name.toLowerCase().includes(filter.toLowerCase())
   )
 
+  const getJobName = (jobId) => {
+    const job = jobs.find(j => j.id === jobId)
+    return job ? job.name : 'N/A'
+  }
+
   return (
     <div style={{ padding: '20px' }}>
       <h1>Parts</h1>
@@ -191,7 +196,7 @@ export default function Parts({ onSelectPart }) {
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Part Name</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Type</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Size</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job ID</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Created</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
@@ -203,7 +208,7 @@ export default function Parts({ onSelectPart }) {
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.name}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.material_type || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.material_size || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.job_id || 'N/A'}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getJobName(p.job_id)}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.status || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{p.created_at ? new Date(p.created_at).toLocaleDateString() : 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
@@ -243,6 +248,13 @@ export default function Parts({ onSelectPart }) {
               <div style={{ marginBottom: '10px' }}>
                 <label>Material Size: </label>
                 <input value={p.material_size || ''} onChange={(e) => { p.material_size = e.target.value; setParts([...parts]) }} />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label>Job: </label>
+                <select value={p.job_id || ''} onChange={(e) => { p.job_id = e.target.value ? parseInt(e.target.value) : null; setParts([...parts]) }}>
+                  <option value="">No Job</option>
+                  {jobs.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
+                </select>
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Status: </label>

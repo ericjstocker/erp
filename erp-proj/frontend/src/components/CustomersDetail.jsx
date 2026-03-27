@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
+import { useTheme } from '../themeContext.jsx'
 
 export default function CustomersDetail({ customerId, onBack }) {
+  const { accentColor, currentTheme } = useTheme()
   const [customer, setCustomer] = useState(null)
   const [jobs, setJobs] = useState([])
   const [parts, setParts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [editedCustomer, setEditedCustomer] = useState(null)
 
   useEffect(() => {
     loadCustomerData()
@@ -18,6 +22,7 @@ export default function CustomersDetail({ customerId, onBack }) {
       setError('')
       const customerRes = await api.getCustomer(customerId)
       setCustomer(customerRes)
+      setEditedCustomer(customerRes)
 
       const jobsRes = await api.getCustomerJobs(customerId)
       setJobs(jobsRes || [])
@@ -43,6 +48,24 @@ export default function CustomersDetail({ customerId, onBack }) {
     }
   }
 
+  const saveCustomerData = async () => {
+    if (!editedCustomer) return
+    try {
+      await api.updateCustomer(customerId, {
+        name: editedCustomer.name,
+        point_of_contact: editedCustomer.point_of_contact,
+        phone_number: editedCustomer.phone_number,
+        email: editedCustomer.email,
+        notes: editedCustomer.notes
+      })
+      setCustomer(editedCustomer)
+      setEditing(false)
+      setError('')
+    } catch (err) {
+      setError('Failed to save customer: ' + err.message)
+    }
+  }
+
   if (loading) return <div style={{ padding: '20px' }}>Loading...</div>
   if (error) return <div style={{ padding: '20px', color: 'red' }}>{error}</div>
   if (!customer) return <div style={{ padding: '20px' }}>Customer not found</div>
@@ -64,12 +87,109 @@ export default function CustomersDetail({ customerId, onBack }) {
         ← Back to Customers
       </button>
       
-      <div style={{ backgroundColor: '#f9f9f9', padding: '15px', borderRadius: '5px', marginBottom: '20px' }}>
-        <h2 style={{ margin: '0 0 15px 0' }}>{customer.name}</h2>
-        <p><strong>Contact:</strong> {customer.contact || 'N/A'}</p>
-        <p><strong>Notes:</strong> {customer.notes || 'N/A'}</p>
-        <p><strong>Created:</strong> {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}</p>
-        <p><strong>Last Updated:</strong> {customer.updated_at ? new Date(customer.updated_at).toLocaleDateString() : 'N/A'}</p>
+      <div style={{ backgroundColor: currentTheme.hover, padding: '15px', borderRadius: '5px', marginBottom: '20px', border: `2px solid ${accentColor}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h2 style={{ margin: 0 }}>{customer.name}</h2>
+          {!editing && <button 
+            onClick={() => setEditing(true)}
+            style={{ 
+              padding: '8px 16px',
+              backgroundColor: accentColor,
+              color: 'white',
+              border: 'none',
+              borderRadius: '3px',
+              cursor: 'pointer'
+            }}
+          >
+            Edit
+          </button>}
+        </div>
+        
+        {editing && editedCustomer ? (
+          <>
+            <div style={{ marginBottom: '15px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+              <label style={{ fontWeight: 'bold' }}>Name:</label>
+              <input 
+                type="text"
+                value={editedCustomer.name}
+                onChange={(e) => setEditedCustomer({...editedCustomer, name: e.target.value})}
+                style={{ padding: '8px', border: `1px solid ${accentColor}`, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text }}
+              />
+            </div>
+            <div style={{ marginBottom: '15px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+              <label style={{ fontWeight: 'bold' }}>Point of Contact:</label>
+              <input 
+                type="text"
+                value={editedCustomer.point_of_contact || ''}
+                onChange={(e) => setEditedCustomer({...editedCustomer, point_of_contact: e.target.value})}
+                style={{ padding: '8px', border: `1px solid ${accentColor}`, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text }}
+              />
+            </div>
+            <div style={{ marginBottom: '15px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+              <label style={{ fontWeight: 'bold' }}>Phone Number:</label>
+              <input 
+                type="text"
+                value={editedCustomer.phone_number || ''}
+                onChange={(e) => setEditedCustomer({...editedCustomer, phone_number: e.target.value})}
+                style={{ padding: '8px', border: `1px solid ${accentColor}`, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text }}
+              />
+            </div>
+            <div style={{ marginBottom: '15px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+              <label style={{ fontWeight: 'bold' }}>Email:</label>
+              <input 
+                type="email"
+                value={editedCustomer.email || ''}
+                onChange={(e) => setEditedCustomer({...editedCustomer, email: e.target.value})}
+                style={{ padding: '8px', border: `1px solid ${accentColor}`, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text }}
+              />
+            </div>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Notes:</label>
+              <textarea 
+                value={editedCustomer.notes || ''}
+                onChange={(e) => setEditedCustomer({...editedCustomer, notes: e.target.value})}
+                style={{ padding: '8px', border: `1px solid ${accentColor}`, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text, width: '100%', minHeight: '80px', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={saveCustomerData}
+                style={{ 
+                  padding: '8px 16px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer'
+                }}
+              >
+                Save
+              </button>
+              <button 
+                onClick={() => { setEditing(false); setEditedCustomer(customer); }}
+                style={{ 
+                  padding: '8px 16px',
+                  backgroundColor: '#ccc',
+                  color: 'black',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p><strong>Point of Contact:</strong> {customer.point_of_contact || 'N/A'}</p>
+            <p><strong>Phone Number:</strong> {customer.phone_number || 'N/A'}</p>
+            <p><strong>Email:</strong> {customer.email || 'N/A'}</p>
+            <p><strong>Notes:</strong> {customer.notes || 'N/A'}</p>
+            <p><strong>Created:</strong> {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}</p>
+            <p><strong>Last Updated:</strong> {customer.updated_at ? new Date(customer.updated_at).toLocaleDateString() : 'N/A'}</p>
+          </>
+        )}
       </div>
 
       <h3>Associated Jobs ({jobs.length})</h3>
