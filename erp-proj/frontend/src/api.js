@@ -55,3 +55,5 @@ export const api = {
     return res.json()
   }
 }
+
+export default api

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { api } from '../api'
+import api from '../api'
 import store from '../store'
 
 export default function Login({ onLogin }) {
