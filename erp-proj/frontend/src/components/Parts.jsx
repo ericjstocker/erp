@@ -93,7 +93,6 @@ export default function Parts({ onSelectPart }) {
     <div style={{ padding: '20px' }}>
       <h1>Parts</h1>
 
-      {/* Add Part Form */}
       <div style={{ marginBottom: '30px', padding: '15px', border: '2px solid #0066cc', borderRadius: '5px' }}>
         <h2>Create New Part</h2>
         <form onSubmit={submit}>
@@ -157,7 +156,6 @@ export default function Parts({ onSelectPart }) {
         </form>
       </div>
 
-      {/* Search */}
       <div style={{ marginBottom: '20px' }}>
         <input
           type="text"
@@ -168,7 +166,6 @@ export default function Parts({ onSelectPart }) {
         />
       </div>
 
-      {/* Parts Table */}
       <h2>All Parts ({filteredParts.length})</h2>
       {filteredParts.length === 0 ? (
         <p>No parts found</p>
@@ -216,7 +213,6 @@ export default function Parts({ onSelectPart }) {
         </div>
       )}
 
-      {/* Edit Modal */}
       {editing && (
         <div style={{ marginTop: '30px', padding: '20px', border: '2px solid #ff9900', borderRadius: '5px', backgroundColor: '#fffacd' }}>
           <h2>Edit Part</h2>
@@ -267,21 +263,6 @@ export default function Parts({ onSelectPart }) {
           ))}
         </div>
       )}
-    </div>
-  )
-}
-                <button onClick={()=>setEditing(null)}>Cancel</button>
-              </>
-            ) : (
-              <>
-                {p.name} — job:{p.job_id} material:{p.material_id}
-                <button onClick={()=>setEditing(p.id)}>Edit</button>
-                <input type="file" onChange={e=>setFileByPart(prev=>({ ...prev, [p.id]: e.target.files[0] }))} />
-                <button onClick={()=>uploadBlueprintFor(p.id)}>Upload Blueprint</button>
-              </>
-            )}</li>
-        ))}
-      </ul>
     </div>
   )
 }
