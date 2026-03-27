@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api'
-import { useTheme } from '../themeContext'
+import { useTheme } from '../themeContext.jsx'
 
 export default function Home() {
   const navigate = useNavigate()

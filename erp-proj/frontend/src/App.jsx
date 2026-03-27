@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import store from './store'
-import { ThemeProvider, useTheme } from './themeContext'
+import { ThemeProvider, useTheme } from './themeContext.jsx'
 import Login from './components/Login'
 import Home from './components/Home'
 import Customers from './components/Customers'
