@@ -13,7 +13,12 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 config = context.config
 
 # Interpret the config file for Python logging.
-fileConfig(config.config_file_name)
+if config.config_file_name is not None:
+    try:
+        fileConfig(config.config_file_name)
+    except Exception:
+        # Skip logging config if it's incomplete
+        pass
 
 from app import models
 from app.database import DATABASE_URL
