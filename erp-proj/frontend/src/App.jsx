@@ -50,7 +50,7 @@ function AppContent() {
     // List views
     switch (view) {
       case 'home':
-        return <Home />
+        return <Home onSelectJob={(id) => handleSelectItem(id, 'job')} />
       case 'customers':
         return <Customers onSelectCustomer={(id) => handleSelectItem(id, 'customer')} />
       case 'jobs':

@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useTheme } from '../themeContext.jsx'
 
-export default function Home() {
-  const navigate = useNavigate()
+export default function Home({ onSelectJob }) {
   const { accentColor, currentTheme } = useTheme()
   const [activeJobs, setActiveJobs] = useState([])
   const [existingJobs, setExistingJobs] = useState([])
@@ -418,7 +416,7 @@ export default function Home() {
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.customer_id}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.status}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>
-                    <button onClick={() => navigate(`/jobs/${job.id}`)}>View</button>
+                    <button onClick={() => onSelectJob(job.id)}>View</button>
                   </td>
                 </tr>
               ))}
