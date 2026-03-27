@@ -1,6 +1,12 @@
+import sys
+import os
 from datetime import date
-from .database import SessionLocal
-from . import models
+
+# Allow absolute imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+from app.database import SessionLocal
+from app import models
 
 
 def seed():
