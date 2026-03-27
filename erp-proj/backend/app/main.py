@@ -71,6 +71,20 @@ def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_
 def list_customers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     return db.query(models.Customer).offset(skip).limit(limit).all()
 
+@app.get('/customers/{customer_id}', response_model=schemas.Customer)
+def get_customer(customer_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    customer = db.query(models.Customer).filter_by(id=customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail='Customer not found')
+    return customer
+
+@app.get('/customers/{customer_id}/jobs', response_model=List[schemas.Job])
+def get_customer_jobs(customer_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    customer = db.query(models.Customer).filter_by(id=customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail='Customer not found')
+    return db.query(models.Job).filter_by(customer_id=customer_id).all()
+
 # Jobs (protected)
 @app.post('/jobs', response_model=schemas.Job)
 def create_job(job: schemas.JobCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
@@ -83,6 +97,20 @@ def create_job(job: schemas.JobCreate, db: Session = Depends(get_db), user: str 
 @app.get('/jobs', response_model=List[schemas.Job])
 def list_jobs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     return db.query(models.Job).offset(skip).limit(limit).all()
+
+@app.get('/jobs/{job_id}', response_model=schemas.Job)
+def get_job(job_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    job = db.query(models.Job).filter_by(id=job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail='Job not found')
+    return job
+
+@app.get('/jobs/{job_id}/parts', response_model=List[schemas.Part])
+def get_job_parts(job_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    job = db.query(models.Job).filter_by(id=job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail='Job not found')
+    return db.query(models.Part).filter_by(job_id=job_id).all()
 
 
 @app.put('/jobs/{job_id}', response_model=schemas.Job)
@@ -110,6 +138,13 @@ def create_part(part: schemas.PartCreate, db: Session = Depends(get_db), user: s
 def list_parts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     return db.query(models.Part).offset(skip).limit(limit).all()
 
+@app.get('/parts/{part_id}', response_model=schemas.Part)
+def get_part(part_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    part = db.query(models.Part).filter_by(id=part_id).first()
+    if not part:
+        raise HTTPException(status_code=404, detail='Part not found')
+    return part
+
 
 @app.put('/parts/{part_id}', response_model=schemas.Part)
 def update_part(part_id: int, part: schemas.PartCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
@@ -135,6 +170,13 @@ def create_material(mat: schemas.MaterialCreate, db: Session = Depends(get_db), 
 @app.get('/materials', response_model=List[schemas.Material])
 def list_materials(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     return db.query(models.Material).offset(skip).limit(limit).all()
+
+@app.get('/materials/{material_id}', response_model=schemas.Material)
+def get_material(material_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    material = db.query(models.Material).filter_by(id=material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail='Material not found')
+    return material
 
 # Purchase Orders (protected)
 @app.post('/pos', response_model=schemas.PO)

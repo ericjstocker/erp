@@ -24,8 +24,8 @@ export default function Home() {
   const loadData = async () => {
     try {
       const [jobsRes, customersRes] = await Promise.all([
-        api.request('/jobs'),
-        api.request('/customers')
+        api.listJobs(),
+        api.listCustomers()
       ])
       setActiveJobs(jobsRes.filter(j => j.status !== 'finished'))
       setExistingJobs(jobsRes)
@@ -65,43 +65,34 @@ export default function Home() {
 
     try {
       // Create job
-      const jobRes = await api.request('/jobs', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: jobForm.name,
-          description: jobForm.description,
-          customer_id: parseInt(jobForm.customer_id),
-          due_date: jobForm.due_date || null,
-          received_date: jobForm.received_date || null,
-          status: 'queued'
-        })
+      const jobRes = await api.createJob({
+        name: jobForm.name,
+        description: jobForm.description,
+        customer_id: parseInt(jobForm.customer_id),
+        due_date: jobForm.due_date || null,
+        received_date: jobForm.received_date || null,
+        status: 'queued'
       })
 
       const jobId = jobRes.id
 
       // Create parts
       for (const part of parts.filter(p => p.name)) {
-        const partRes = await api.request('/parts', {
-          method: 'POST',
-          body: JSON.stringify({
-            job_id: jobId,
-            name: part.name,
-            material_type: part.material_type,
-            material_size: part.material_size,
-            status: part.status
-          })
+        const partRes = await api.createPart({
+          job_id: jobId,
+          name: part.name,
+          material_type: part.material_type,
+          material_size: part.material_size,
+          status: part.status
         })
 
         // Upload blueprint if provided
         if (part.blueprint) {
-          const formData = new FormData()
-          formData.append('file', part.blueprint)
-          const token = localStorage.getItem('token')
-          await fetch('/api/upload-blueprint', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-          })
+          try {
+            await api.uploadBlueprint(partRes.id, part.blueprint)
+          } catch (err) {
+            console.error('Error uploading blueprint:', err)
+          }
         }
       }
 
@@ -122,15 +113,12 @@ export default function Home() {
 
     try {
       for (const part of parts.filter(p => p.name)) {
-        await api.request('/parts', {
-          method: 'POST',
-          body: JSON.stringify({
-            job_id: parseInt(selectedJobForPart),
-            name: part.name,
-            material_type: part.material_type,
-            material_size: part.material_size,
-            status: part.status
-          })
+        await api.createPart({
+          job_id: parseInt(selectedJobForPart),
+          name: part.name,
+          material_type: part.material_type,
+          material_size: part.material_size,
+          status: part.status
         })
       }
 

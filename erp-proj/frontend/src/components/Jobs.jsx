@@ -3,31 +3,45 @@ import api from '../api'
 
 export default function Jobs({ onSelectJob }) {
   const [jobs, setJobs] = useState([])
+  const [customers, setCustomers] = useState([])
+  const [parts, setParts] = useState([])
   const [name, setName] = useState('')
   const [customerId, setCustomerId] = useState('')
+  const [selectedParts, setSelectedParts] = useState([])
   const [filter, setFilter] = useState('')
   const [editing, setEditing] = useState(null)
 
   useEffect(() => {
-    loadJobs()
+    loadData()
   }, [])
 
-  const loadJobs = async () => {
+  const loadData = async () => {
     try {
-      const res = await api.listJobs()
-      setJobs(res)
+      const [jobsRes, customersRes, partsRes] = await Promise.all([
+        api.listJobs(),
+        api.listCustomers(),
+        api.listParts()
+      ])
+      setJobs(jobsRes)
+      setCustomers(customersRes)
+      setParts(partsRes)
     } catch (err) {
-      console.error('Error loading jobs:', err)
+      console.error('Error loading data:', err)
     }
   }
 
   async function submit(e) {
     e.preventDefault()
     try {
-      await api.createJob({ name, customer_id: customerId || null })
+      await api.createJob({ 
+        name, 
+        customer_id: customerId ? parseInt(customerId) : null,
+        status: 'queued'
+      })
       setName('')
       setCustomerId('')
-      loadJobs()
+      setSelectedParts([])
+      loadData()
     } catch (err) {
       alert(`Error creating job: ${err}`)
     }
@@ -40,7 +54,7 @@ export default function Jobs({ onSelectJob }) {
     try {
       await api.updateJob(jobId, payload)
       setEditing(null)
-      loadJobs()
+      loadData()
     } catch (err) {
       alert(`Error updating job: ${err}`)
     }
@@ -69,13 +83,16 @@ export default function Jobs({ onSelectJob }) {
             />
           </div>
           <div style={{ marginBottom: '10px' }}>
-            <label>Customer ID: </label>
-            <input
-              type="number"
+            <label>Customer: </label>
+            <select
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
-              placeholder="Customer ID (optional)"
-            />
+            >
+              <option value="">Select Customer (optional)</option>
+              {customers.map(c => (
+                <option key={c.id} value={c.id}>{c.id} - {c.name}</option>
+              ))}
+            </select>
           </div>
           <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
             Create Job

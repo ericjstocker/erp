@@ -21,7 +21,7 @@ export default function Material() {
 
   const loadMaterials = async () => {
     try {
-      const res = await api.request('/materials')
+      const res = await api.listMaterials()
       setMaterials(res)
     } catch (err) {
       console.error('Error loading materials:', err)

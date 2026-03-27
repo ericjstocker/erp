@@ -3,6 +3,8 @@ import api from '../api'
 
 export default function Parts({ onSelectPart }) {
   const [parts, setParts] = useState([])
+  const [jobs, setJobs] = useState([])
+  const [materials, setMaterials] = useState([])
   const [name, setName] = useState('')
   const [jobId, setJobId] = useState('')
   const [materialId, setMaterialId] = useState('')
@@ -14,15 +16,21 @@ export default function Parts({ onSelectPart }) {
   const [fileByPart, setFileByPart] = useState({})
 
   useEffect(() => {
-    loadParts()
+    loadData()
   }, [])
 
-  const loadParts = async () => {
+  const loadData = async () => {
     try {
-      const res = await api.listParts()
-      setParts(res)
+      const [partsRes, jobsRes, materialsRes] = await Promise.all([
+        api.listParts(),
+        api.listJobs(),
+        api.listMaterials()
+      ])
+      setParts(partsRes)
+      setJobs(jobsRes)
+      setMaterials(materialsRes)
     } catch (err) {
-      console.error('Error loading parts:', err)
+      console.error('Error loading data:', err)
     }
   }
 
@@ -43,7 +51,7 @@ export default function Parts({ onSelectPart }) {
       setMaterialType('')
       setMaterialSize('')
       setStatus('pending')
-      loadParts()
+      loadData()
     } catch (err) {
       alert(`Error creating part: ${err}`)
     }
@@ -63,7 +71,7 @@ export default function Parts({ onSelectPart }) {
     try {
       await api.updatePart(partId, payload)
       setEditing(null)
-      loadParts()
+      loadData()
     } catch (err) {
       alert(`Error updating part: ${err}`)
     }
@@ -78,7 +86,7 @@ export default function Parts({ onSelectPart }) {
     try {
       await api.uploadBlueprint(partId, file)
       setFileByPart(prev => ({ ...prev, [partId]: null }))
-      loadParts()
+      loadData()
       alert('Blueprint uploaded successfully')
     } catch (err) {
       alert(`Error uploading blueprint: ${err}`)
@@ -126,21 +134,27 @@ export default function Parts({ onSelectPart }) {
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Job ID: </label>
-            <input
-              type="number"
+            <select
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
-              placeholder="Job ID (optional)"
-            />
+            >
+              <option value="">Select Job (optional)</option>
+              {jobs.map(j => (
+                <option key={j.id} value={j.id}>{j.id} - {j.name}</option>
+              ))}
+            </select>
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Material ID: </label>
-            <input
-              type="number"
+            <select
               value={materialId}
               onChange={(e) => setMaterialId(e.target.value)}
-              placeholder="Material ID (optional)"
-            />
+            >
+              <option value="">Select Material (optional)</option>
+              {materials.map(m => (
+                <option key={m.id} value={m.id}>{m.id} - {m.name}</option>
+              ))}
+            </select>
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Status: </label>
