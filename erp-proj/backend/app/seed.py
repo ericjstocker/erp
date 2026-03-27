@@ -17,7 +17,7 @@ def seed():
             return
 
         # Customers
-        cust = models.Customer(name='Acme Corp', contact='acme@example.com', notes='Priority customer')
+        cust = models.Customer(name='Acme Corp', point_of_contact='Jane Smith', phone_number='555-1234', email='acme@example.com', notes='Priority customer')
         db.add(cust)
 
         # Materials
