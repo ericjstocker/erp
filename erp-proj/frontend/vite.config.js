@@ -7,6 +7,10 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     allowedHosts: ['erp.ancibel.net', 'localhost'],
-    hmr: false
+    hmr: {
+      protocol: 'wss',
+      host: 'erp.ancibel.net',
+      port: 443
+    }
   }
 })
