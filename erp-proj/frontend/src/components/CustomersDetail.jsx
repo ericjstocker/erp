@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import api from '../api'
 import { useTheme } from '../themeContext.jsx'
 
-export default function CustomersDetail({ customerId, onBack }) {
+export default function CustomersDetail({ customerId, onBack, onSelectJob, onSelectPart }) {
   const { accentColor, currentTheme } = useTheme()
   const [customer, setCustomer] = useState(null)
   const [jobs, setJobs] = useState([])
@@ -210,7 +210,12 @@ export default function CustomersDetail({ customerId, onBack }) {
             {jobs.map(job => (
               <tr key={job.id}>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{job.id}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{job.name}</td>
+                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                  <span
+                    onClick={() => onSelectJob && onSelectJob(job.id)}
+                    style={{ color: accentColor, cursor: 'pointer', textDecoration: 'underline' }}
+                  >{job.name}</span>
+                </td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{job.due_date ? new Date(job.due_date).toLocaleDateString() : 'N/A'}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                   <span style={{ 
@@ -241,14 +246,19 @@ export default function CustomersDetail({ customerId, onBack }) {
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Part Name</th>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Type</th>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job ID</th>
+              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job</th>
             </tr>
           </thead>
           <tbody>
             {parts.map(part => (
               <tr key={part.id}>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.id}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.name}</td>
+                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                  <span
+                    onClick={() => onSelectPart && onSelectPart(part.id)}
+                    style={{ color: accentColor, cursor: 'pointer', textDecoration: 'underline' }}
+                  >{part.name}</span>
+                </td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.material_type || 'N/A'}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                   <span style={{ 
@@ -261,7 +271,14 @@ export default function CustomersDetail({ customerId, onBack }) {
                     {part.status}
                   </span>
                 </td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.job_id || 'N/A'}</td>
+                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                  {jobs.find(j => j.id === part.job_id) ? (
+                    <span
+                      onClick={() => onSelectJob && onSelectJob(part.job_id)}
+                      style={{ color: accentColor, cursor: 'pointer', textDecoration: 'underline' }}
+                    >{jobs.find(j => j.id === part.job_id).name}</span>
+                  ) : (part.job_id || 'N/A')}
+                </td>
               </tr>
             ))}
           </tbody>

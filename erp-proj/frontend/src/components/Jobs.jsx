@@ -10,6 +10,9 @@ export default function Jobs({ onSelectJob }) {
   const [selectedParts, setSelectedParts] = useState([])
   const [filter, setFilter] = useState('')
   const [editing, setEditing] = useState(null)
+  const [createDocFiles, setCreateDocFiles] = useState([])
+  const [editDocFiles, setEditDocFiles] = useState([])
+  const [editDocs, setEditDocs] = useState([])
 
   useEffect(() => {
     loadData()
@@ -33,14 +36,20 @@ export default function Jobs({ onSelectJob }) {
   async function submit(e) {
     e.preventDefault()
     try {
-      await api.createJob({ 
+      const newJob = await api.createJob({ 
         name, 
         customer_id: customerId ? parseInt(customerId) : null,
         status: 'queued'
       })
+      if (createDocFiles.length > 0) {
+        for (const file of createDocFiles) {
+          try { await api.uploadJobDocument(newJob.id, file) } catch (err) { console.error('Doc upload error:', err) }
+        }
+      }
       setName('')
       setCustomerId('')
       setSelectedParts([])
+      setCreateDocFiles([])
       loadData()
     } catch (err) {
       alert(`Error creating job: ${err}`)
@@ -59,10 +68,49 @@ export default function Jobs({ onSelectJob }) {
     }
     try {
       await api.updateJob(jobId, payload)
+      if (editDocFiles.length > 0) {
+        for (const file of editDocFiles) {
+          try { await api.uploadJobDocument(jobId, file) } catch (err) { console.error('Doc upload error:', err) }
+        }
+      }
       setEditing(null)
+      setEditDocFiles([])
+      setEditDocs([])
       loadData()
     } catch (err) {
       alert(`Error updating job: ${err}`)
+    }
+  }
+
+  async function openEdit(jobId) {
+    setEditing(jobId)
+    setEditDocFiles([])
+    try {
+      const docs = await api.listJobDocuments(jobId)
+      setEditDocs(docs || [])
+    } catch (err) {
+      setEditDocs([])
+    }
+  }
+
+  async function deleteEditDoc(docId) {
+    if (!window.confirm('Delete this document?')) return
+    try {
+      await api.deleteJobDocument(docId)
+      setEditDocs(editDocs.filter(d => d.id !== docId))
+    } catch (err) {
+      alert(`Error deleting document: ${err}`)
+    }
+  }
+
+  async function downloadEditDoc(doc) {
+    try {
+      const { url, filename } = await api.downloadJobDocument(doc.id, doc.filename)
+      const a = document.createElement('a')
+      a.href = url; a.download = filename; a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (err) {
+      alert(`Download failed: ${err}`)
     }
   }
 
@@ -104,6 +152,15 @@ export default function Jobs({ onSelectJob }) {
                 <option key={c.id} value={c.id}>{c.id} - {c.name}</option>
               ))}
             </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>PO Documents: </label>
+            <input
+              type="file"
+              multiple
+              onChange={(e) => setCreateDocFiles(Array.from(e.target.files))}
+            />
+            {createDocFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: '#555' }}>{createDocFiles.length} file(s) selected</span>}
           </div>
           <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
             Create Job
@@ -154,7 +211,7 @@ export default function Jobs({ onSelectJob }) {
                     View Details
                   </button>
                   <button
-                    onClick={() => setEditing(j.id)}
+                    onClick={() => openEdit(j.id)}
                     style={{ padding: '5px 10px', backgroundColor: '#ff9900', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
                   >
                     Edit
@@ -197,10 +254,41 @@ export default function Jobs({ onSelectJob }) {
                   <option value="finished">Finished</option>
                 </select>
               </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Upload PO Documents:</label>
+                <input type="file" multiple onChange={(e) => setEditDocFiles(Array.from(e.target.files))} />
+                {editDocFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: '#555' }}>{editDocFiles.length} file(s) selected</span>}
+              </div>
+              {editDocs.length > 0 && (
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Existing Documents ({editDocs.length}):</label>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#f0f0f0' }}>
+                        <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Filename</th>
+                        <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Uploaded</th>
+                        <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editDocs.map(doc => (
+                        <tr key={doc.id}>
+                          <td style={{ border: '1px solid #ddd', padding: '6px' }}>{doc.filename}</td>
+                          <td style={{ border: '1px solid #ddd', padding: '6px' }}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                          <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>
+                            <button onClick={() => downloadEditDoc(doc)} style={{ padding: '3px 8px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}>Download</button>
+                            <button onClick={() => deleteEditDoc(doc.id)} style={{ padding: '3px 8px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               <button onClick={() => saveEdit(j.id)} style={{ padding: '8px 16px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '8px' }}>
                 Save
               </button>
-              <button onClick={() => setEditing(null)} style={{ padding: '8px 16px', backgroundColor: '#ccc', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
+              <button onClick={() => { setEditing(null); setEditDocFiles([]); setEditDocs([]) }} style={{ padding: '8px 16px', backgroundColor: '#ccc', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>

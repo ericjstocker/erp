@@ -56,6 +56,14 @@ class PartBlueprint(BaseModel):
     class Config:
         from_attributes = True
 
+class JobDocument(BaseModel):
+    id: int
+    job_id: int
+    filename: str
+    uploaded_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
 class Part(PartBase):
     id: int
     blueprint_path: Optional[str] = None

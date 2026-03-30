@@ -31,6 +31,7 @@ class Job(Base):
     customer = relationship('Customer', back_populates='jobs')
     parts = relationship('Part', back_populates='job')
     purchase_orders = relationship('PurchaseOrder', back_populates='job')
+    documents = relationship('JobDocument', back_populates='job', cascade='all, delete-orphan')
 
 class Part(Base):
     __tablename__ = 'parts'
@@ -58,6 +59,16 @@ class PartBlueprint(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
     part = relationship('Part', back_populates='blueprints')
+
+class JobDocument(Base):
+    __tablename__ = 'job_documents'
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey('jobs.id'), nullable=False)
+    filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    job = relationship('Job', back_populates='documents')
 
 class Material(Base):
     __tablename__ = 'materials'

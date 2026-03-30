@@ -322,3 +322,46 @@ def download_blueprint(blueprint_id: int, db: Session = Depends(get_db), user: s
         raise HTTPException(status_code=404, detail='Blueprint file not found on disk')
     return FileResponse(bp.file_path, filename=bp.filename)
 
+# Job document endpoints (protected)
+@app.post('/job-documents/upload', response_model=schemas.JobDocument)
+def upload_job_document(job_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    job = db.query(models.Job).filter_by(id=job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail='Job not found')
+    filename = f"job_{job_id}_{file.filename}"
+    dest_path = os.path.join(UPLOAD_DIR, filename)
+    with open(dest_path, 'wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    doc = models.JobDocument(job_id=job_id, filename=file.filename, file_path=dest_path)
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+@app.get('/jobs/{job_id}/documents', response_model=List[schemas.JobDocument])
+def list_job_documents(job_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    job = db.query(models.Job).filter_by(id=job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail='Job not found')
+    return db.query(models.JobDocument).filter_by(job_id=job_id).order_by(models.JobDocument.uploaded_at).all()
+
+@app.delete('/job-documents/{document_id}', status_code=204)
+def delete_job_document(document_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    doc = db.query(models.JobDocument).filter_by(id=document_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail='Document not found')
+    if os.path.exists(doc.file_path):
+        os.remove(doc.file_path)
+    db.delete(doc)
+    db.commit()
+    return None
+
+@app.get('/job-documents/download/{document_id}')
+def download_job_document(document_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    doc = db.query(models.JobDocument).filter_by(id=document_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail='Document not found')
+    if not os.path.exists(doc.file_path):
+        raise HTTPException(status_code=404, detail='Document file not found on disk')
+    return FileResponse(doc.file_path, filename=doc.filename)
+

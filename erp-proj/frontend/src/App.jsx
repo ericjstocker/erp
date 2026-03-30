@@ -39,7 +39,7 @@ function AppContent() {
     // Detail views
     if (detailView && selectedId) {
       if (selectedId.itemType === 'customer') {
-        return <CustomersDetail customerId={selectedId.id} onBack={handleBackFromDetail} />
+        return <CustomersDetail customerId={selectedId.id} onBack={handleBackFromDetail} onSelectJob={(id) => handleSelectItem(id, 'job')} onSelectPart={(id) => handleSelectItem(id, 'part')} />
       }
       if (selectedId.itemType === 'job') {
         return <JobsDetail jobId={selectedId.id} onBack={handleBackFromDetail} />

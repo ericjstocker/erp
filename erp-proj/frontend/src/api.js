@@ -72,6 +72,28 @@ export const api = {
     const res = await fetch(url, { method: 'POST', body: fd, headers })
     if (!res.ok) throw new Error(await res.text())
     return res.json()
+  },
+  // job document endpoints (multi-file PO uploads)
+  listJobDocuments: (jobId) => request(`/jobs/${jobId}/documents`),
+  deleteJobDocument: (docId) => request(`/job-documents/${docId}`, { method: 'DELETE' }),
+  downloadJobDocument: async (docId, filename) => {
+    const token = store.getToken()
+    const res = await fetch(`${BASE}/job-documents/download/${docId}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const blob = await res.blob()
+    return { url: URL.createObjectURL(blob), filename }
+  },
+  uploadJobDocument: async (jobId, file) => {
+    const url = `${BASE}/job-documents/upload?job_id=${encodeURIComponent(jobId)}`
+    const fd = new FormData()
+    fd.append('file', file, file.name)
+    const token = store.getToken()
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
+    const res = await fetch(url, { method: 'POST', body: fd, headers })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
   }
 }
 
