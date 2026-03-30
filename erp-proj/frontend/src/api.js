@@ -35,15 +35,6 @@ export const api = {
   createCustomer: (body) => request('/customers', { method: 'POST', body: JSON.stringify(body) }),
   updateCustomer: (id, body) => request(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   updateMaterial: (id, body) => request(`/materials/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  downloadBlueprint: async (partId) => {
-    const token = store.getToken()
-    const res = await fetch(`${BASE}/blueprints/download/${partId}`, {
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-    })
-    if (!res.ok) throw new Error(await res.text())
-    const blob = await res.blob()
-    return URL.createObjectURL(blob)
-  },
   listJobs: () => request('/jobs'),
   getJob: (id) => request(`/jobs/${id}`),
   getJobParts: (id) => request(`/jobs/${id}/parts`),

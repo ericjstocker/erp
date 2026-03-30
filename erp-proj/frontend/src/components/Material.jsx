@@ -13,7 +13,7 @@ export default function Material({ onSelectMaterial }) {
     width: '',
     height: '',
     quantity: '',
-    purchase_location: '',,
+    purchase_location: '',
     provider_info: '',
     po_number: '',
     doc: null

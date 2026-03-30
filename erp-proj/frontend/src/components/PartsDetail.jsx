@@ -72,6 +72,7 @@ export default function PartsDetail({ partId, onBack }) {
 
   const handleUpload = async () => {
     if (uploadFiles.length === 0) return
+    const count = uploadFiles.length
     setUploading(true)
     setMessage('')
     try {
@@ -82,7 +83,7 @@ export default function PartsDetail({ partId, onBack }) {
       // reload blueprints list
       const bpsRes = await api.listBlueprints(partId)
       setBlueprints(bpsRes)
-      setMessage(`${uploadFiles.length} blueprint(s) uploaded successfully.`)
+      setMessage(`${count} blueprint(s) uploaded successfully.`)
     } catch (err) {
       setMessage('Upload error: ' + err.message)
     } finally {
