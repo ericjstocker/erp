@@ -47,6 +47,17 @@ class Part(Base):
 
     job = relationship('Job', back_populates='parts')
     material = relationship('Material', back_populates='parts')
+    blueprints = relationship('PartBlueprint', back_populates='part', cascade='all, delete-orphan')
+
+class PartBlueprint(Base):
+    __tablename__ = 'part_blueprints'
+    id = Column(Integer, primary_key=True, index=True)
+    part_id = Column(Integer, ForeignKey('parts.id'), nullable=False)
+    filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    part = relationship('Part', back_populates='blueprints')
 
 class Material(Base):
     __tablename__ = 'materials'
@@ -61,6 +72,7 @@ class Material(Base):
     purchase_location = Column(String, nullable=True)
     provider_info = Column(String, nullable=True)
     po_number = Column(String, nullable=True)
+    quantity = Column(Integer, nullable=True)
     doc_path = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

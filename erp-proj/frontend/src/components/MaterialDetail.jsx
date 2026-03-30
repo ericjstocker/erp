@@ -34,6 +34,7 @@ export default function MaterialDetail({ materialId, onBack }) {
         length: edited.length,
         width: edited.width,
         height: edited.height,
+        quantity: edited.quantity !== '' && edited.quantity !== null && edited.quantity !== undefined ? parseInt(edited.quantity) : null,
         purchase_location: edited.purchase_location,
         provider_info: edited.provider_info,
         po_number: edited.po_number
@@ -91,6 +92,7 @@ export default function MaterialDetail({ materialId, onBack }) {
         {field('Length', 'length')}
         {field('Width', 'width')}
         {field('Height', 'height')}
+        {field('Quantity', 'quantity', 'number')}
         {field('PO Number', 'po_number')}
         {field('Purchase Location', 'purchase_location')}
         {field('Provider Info', 'provider_info')}

@@ -12,7 +12,8 @@ export default function Material({ onSelectMaterial }) {
     length: '',
     width: '',
     height: '',
-    purchase_location: '',
+    quantity: '',
+    purchase_location: '',,
     provider_info: '',
     po_number: '',
     doc: null
@@ -21,7 +22,7 @@ export default function Material({ onSelectMaterial }) {
   const [message, setMessage] = useState('')
   const [filters, setFilters] = useState({
     name: '', material_type: '', shape: '', diameter: '',
-    length: '', width: '', height: '', po_number: '',
+    length: '', width: '', height: '', quantity: '', po_number: '',
     purchase_location: '', provider_info: ''
   })
   const [showFilters, setShowFilters] = useState(false)
@@ -62,12 +63,13 @@ export default function Material({ onSelectMaterial }) {
         length: newMaterial.length,
         width: newMaterial.width,
         height: newMaterial.height,
+        quantity: newMaterial.quantity ? parseInt(newMaterial.quantity) : null,
         purchase_location: newMaterial.purchase_location,
         provider_info: newMaterial.provider_info,
         po_number: newMaterial.po_number
       })
       setMessage('Material created successfully!')
-      setNewMaterial({ name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '', provider_info: '', po_number: '', doc: null })
+      setNewMaterial({ name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', quantity: '', purchase_location: '', provider_info: '', po_number: '', doc: null })
       setShowNewMaterialForm(false)
       loadMaterials()
     } catch (err) {
@@ -87,6 +89,7 @@ export default function Material({ onSelectMaterial }) {
         length: mat.length,
         width: mat.width,
         height: mat.height,
+        quantity: mat.quantity !== '' && mat.quantity !== null && mat.quantity !== undefined ? parseInt(mat.quantity) : null,
         purchase_location: mat.purchase_location,
         provider_info: mat.provider_info,
         po_number: mat.po_number
@@ -119,6 +122,7 @@ export default function Material({ onSelectMaterial }) {
       (m.length || '').toLowerCase().includes(filters.length.toLowerCase()) &&
       (m.width || '').toLowerCase().includes(filters.width.toLowerCase()) &&
       (m.height || '').toLowerCase().includes(filters.height.toLowerCase()) &&
+      String(m.quantity ?? '').includes(filters.quantity) &&
       (m.po_number || '').toLowerCase().includes(filters.po_number.toLowerCase()) &&
       (m.purchase_location || '').toLowerCase().includes(filters.purchase_location.toLowerCase()) &&
       (m.provider_info || '').toLowerCase().includes(filters.provider_info.toLowerCase())
@@ -168,6 +172,10 @@ export default function Material({ onSelectMaterial }) {
             <input type="text" name="height" value={newMaterial.height} onChange={handleMaterialChange} placeholder="e.g., 0.25in" />
           </div>
           <div style={{ marginBottom: '10px' }}>
+            <label>Quantity: </label>
+            <input type="number" name="quantity" value={newMaterial.quantity} onChange={handleMaterialChange} placeholder="e.g., 10" min="0" />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
             <label>PO Number: </label>
             <input type="text" name="po_number" value={newMaterial.po_number} onChange={handleMaterialChange} placeholder="Purchase order number" />
           </div>
@@ -200,7 +208,7 @@ export default function Material({ onSelectMaterial }) {
         </button>
         {showFilters && (
           <button
-            onClick={() => setFilters({ name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', po_number: '', purchase_location: '', provider_info: '' })}
+            onClick={() => setFilters({ name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', quantity: '', po_number: '', purchase_location: '', provider_info: '' })}
             style={{ marginLeft: '8px', padding: '8px 16px', backgroundColor: '#cc0000', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
           >
             Clear Filters
@@ -218,6 +226,7 @@ export default function Material({ onSelectMaterial }) {
             ['Length', 'length'],
             ['Width', 'width'],
             ['Height', 'height'],
+            ['Quantity', 'quantity'],
             ['PO #', 'po_number'],
             ['Purchase Location', 'purchase_location'],
             ['Provider', 'provider_info'],
@@ -251,6 +260,7 @@ export default function Material({ onSelectMaterial }) {
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Shape</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Diameter</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>L x W x H</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Qty</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>PO #</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Purchase Location</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Provider</th>
@@ -266,6 +276,7 @@ export default function Material({ onSelectMaterial }) {
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.shape || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.diameter || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{[material.length, material.width, material.height].filter(Boolean).join(' x ') || 'N/A'}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.quantity ?? 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.po_number || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.purchase_location || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.provider_info || 'N/A'}</td>
@@ -329,6 +340,10 @@ export default function Material({ onSelectMaterial }) {
               <div style={{ marginBottom: '10px' }}>
                 <label>Height: </label>
                 <input value={m.height || ''} onChange={(e) => { m.height = e.target.value; setMaterials([...materials]) }} />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label>Quantity: </label>
+                <input type="number" value={m.quantity ?? ''} min="0" onChange={(e) => { m.quantity = e.target.value; setMaterials([...materials]) }} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>PO Number: </label>

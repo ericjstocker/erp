@@ -48,6 +48,14 @@ class PartBase(BaseModel):
 class PartCreate(PartBase):
     pass
 
+class PartBlueprint(BaseModel):
+    id: int
+    part_id: int
+    filename: str
+    uploaded_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
 class Part(PartBase):
     id: int
     blueprint_path: Optional[str] = None
@@ -67,6 +75,7 @@ class MaterialBase(BaseModel):
     purchase_location: Optional[str] = None
     provider_info: Optional[str] = None
     po_number: Optional[str] = None
+    quantity: Optional[int] = None
 
 class MaterialCreate(MaterialBase):
     pass

@@ -279,8 +279,8 @@ def update_po(po_id: int, po: schemas.POCreate, db: Session = Depends(get_db), u
     db.refresh(db_po)
     return db_po
 
-# Blueprint upload (protected)
-@app.post('/blueprints/upload')
+# Blueprint endpoints (protected)
+@app.post('/blueprints/upload', response_model=schemas.PartBlueprint)
 def upload_blueprint(part_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     part = db.query(models.Part).filter_by(id=part_id).first()
     if not part:
@@ -289,17 +289,36 @@ def upload_blueprint(part_id: int, file: UploadFile = File(...), db: Session = D
     dest_path = os.path.join(UPLOAD_DIR, filename)
     with open(dest_path, 'wb') as buffer:
         shutil.copyfileobj(file.file, buffer)
-    part.blueprint_path = dest_path
-    db.add(part)
+    bp = models.PartBlueprint(part_id=part_id, filename=file.filename, file_path=dest_path)
+    db.add(bp)
     db.commit()
-    db.refresh(part)
-    return {"part_id": part_id, "path": dest_path}
+    db.refresh(bp)
+    return bp
 
-@app.get('/blueprints/download/{part_id}')
-def download_blueprint(part_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+@app.get('/parts/{part_id}/blueprints', response_model=List[schemas.PartBlueprint])
+def list_blueprints(part_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     part = db.query(models.Part).filter_by(id=part_id).first()
-    if not part or not part.blueprint_path:
+    if not part:
+        raise HTTPException(status_code=404, detail='Part not found')
+    return db.query(models.PartBlueprint).filter_by(part_id=part_id).order_by(models.PartBlueprint.uploaded_at).all()
+
+@app.delete('/blueprints/{blueprint_id}', status_code=204)
+def delete_blueprint(blueprint_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    bp = db.query(models.PartBlueprint).filter_by(id=blueprint_id).first()
+    if not bp:
         raise HTTPException(status_code=404, detail='Blueprint not found')
-    if not os.path.exists(part.blueprint_path):
+    if os.path.exists(bp.file_path):
+        os.remove(bp.file_path)
+    db.delete(bp)
+    db.commit()
+    return None
+
+@app.get('/blueprints/download/{blueprint_id}')
+def download_blueprint(blueprint_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    bp = db.query(models.PartBlueprint).filter_by(id=blueprint_id).first()
+    if not bp:
+        raise HTTPException(status_code=404, detail='Blueprint not found')
+    if not os.path.exists(bp.file_path):
         raise HTTPException(status_code=404, detail='Blueprint file not found on disk')
-    return FileResponse(part.blueprint_path, filename=os.path.basename(part.blueprint_path))
+    return FileResponse(bp.file_path, filename=bp.filename)
+

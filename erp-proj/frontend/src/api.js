@@ -60,16 +60,24 @@ export const api = {
   listPOs: () => request('/pos'),
   createPO: (body) => request('/pos', { method: 'POST', body: JSON.stringify(body) }),
   updatePO: (id, body) => request(`/pos/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  // blueprint upload (multipart)
+  // blueprint endpoints (multi-file)
+  listBlueprints: (partId) => request(`/parts/${partId}/blueprints`),
+  deleteBlueprint: (blueprintId) => request(`/blueprints/${blueprintId}`, { method: 'DELETE' }),
+  downloadBlueprint: async (blueprintId, filename) => {
+    const token = store.getToken()
+    const res = await fetch(`${BASE}/blueprints/download/${blueprintId}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const blob = await res.blob()
+    return { url: URL.createObjectURL(blob), filename }
+  },
   uploadBlueprint: async (partId, file) => {
     const url = `${BASE}/blueprints/upload?part_id=${encodeURIComponent(partId)}`
     const fd = new FormData()
     fd.append('file', file, file.name)
     const token = store.getToken()
-    const headers = {}
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
     const res = await fetch(url, { method: 'POST', body: fd, headers })
     if (!res.ok) throw new Error(await res.text())
     return res.json()

@@ -11,6 +11,7 @@ export default function Parts({ onSelectPart }) {
   const [materialType, setMaterialType] = useState('')
   const [materialSize, setMaterialSize] = useState('')
   const [status, setStatus] = useState('pending')
+  const [createBlueprintFiles, setCreateBlueprintFiles] = useState([])
   const [filter, setFilter] = useState('')
   const [editing, setEditing] = useState(null)
   const [fileByPart, setFileByPart] = useState({})
@@ -42,7 +43,7 @@ export default function Parts({ onSelectPart }) {
   async function submit(e) {
     e.preventDefault()
     try {
-      await api.createPart({
+      const created = await api.createPart({
         name,
         job_id: jobId || null,
         material_id: materialId || null,
@@ -50,12 +51,21 @@ export default function Parts({ onSelectPart }) {
         material_size: materialSize || null,
         status
       })
+      // upload any blueprint files selected during creation
+      for (const file of createBlueprintFiles) {
+        try {
+          await api.uploadBlueprint(created.id, file)
+        } catch (err) {
+          alert(`Warning: part created but blueprint upload failed for ${file.name}: ${err}`)
+        }
+      }
       setName('')
       setJobId('')
       setMaterialId('')
       setMaterialType('')
       setMaterialSize('')
       setStatus('pending')
+      setCreateBlueprintFiles([])
       loadData()
     } catch (err) {
       alert(`Error creating part: ${err}`)
@@ -83,16 +93,18 @@ export default function Parts({ onSelectPart }) {
   }
 
   async function uploadBlueprintFor(partId) {
-    const file = fileByPart[partId]
-    if (!file) {
-      alert('Select file first')
+    const files = fileByPart[partId]
+    if (!files || files.length === 0) {
+      alert('Select file(s) first')
       return
     }
     try {
-      await api.uploadBlueprint(partId, file)
-      setFileByPart(prev => ({ ...prev, [partId]: null }))
+      for (const file of files) {
+        await api.uploadBlueprint(partId, file)
+      }
+      setFileByPart(prev => ({ ...prev, [partId]: [] }))
       loadData()
-      alert('Blueprint uploaded successfully')
+      alert(`${files.length} blueprint(s) uploaded successfully`)
     } catch (err) {
       alert(`Error uploading blueprint: ${err}`)
     }
@@ -192,6 +204,20 @@ export default function Parts({ onSelectPart }) {
               <option value="in-progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Blueprints (optional): </label>
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg,.tiff,.svg,.doc,.docx"
+              onChange={(e) => setCreateBlueprintFiles(Array.from(e.target.files))}
+            />
+            {createBlueprintFiles.length > 0 && (
+              <ul style={{ margin: '6px 0 0 0', paddingLeft: '18px', fontSize: '13px', color: '#555' }}>
+                {createBlueprintFiles.map((f, i) => <li key={i}>{f.name}</li>)}
+              </ul>
+            )}
           </div>
           <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
             Create Part
@@ -298,17 +324,19 @@ export default function Parts({ onSelectPart }) {
                 </select>
               </div>
               <div style={{ marginBottom: '10px' }}>
-                <label>Upload Blueprint: </label>
+                <label>Upload Blueprints: </label>
                 <input
                   type="file"
-                  onChange={(e) => setFileByPart(prev => ({ ...prev, [p.id]: e.target.files[0] }))}
+                  multiple
+                  accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg,.tiff,.svg,.doc,.docx"
+                  onChange={(e) => setFileByPart(prev => ({ ...prev, [p.id]: Array.from(e.target.files) }))}
                 />
-                {fileByPart[p.id] && (
+                {fileByPart[p.id] && fileByPart[p.id].length > 0 && (
                   <button
                     onClick={() => uploadBlueprintFor(p.id)}
                     style={{ marginLeft: '10px', padding: '5px 10px', backgroundColor: '#00cc00', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
                   >
-                    Upload Blueprint
+                    Upload {fileByPart[p.id].length} File(s)
                   </button>
                 )}
               </div>
