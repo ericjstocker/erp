@@ -21,8 +21,8 @@ def seed():
         db.add(cust)
 
         # Materials
-        mat1 = models.Material(name='Aluminum 6061', material_type='6061-T6', material_size='0.125" sheet', purchase_location='Local Metal Supply')
-        mat2 = models.Material(name='Stainless 304', material_type='304 annealed', material_size='0.5" plate', purchase_location='Steel Warehouse')
+        mat1 = models.Material(name='Aluminum 6061', material_type='6061-T6', shape='Sheet', height='0.125"', purchase_location='Local Metal Supply')
+        mat2 = models.Material(name='Stainless 304', material_type='304 annealed', shape='Plate', height='0.5"', purchase_location='Steel Warehouse')
         db.add_all([mat1, mat2])
 
         db.commit()
