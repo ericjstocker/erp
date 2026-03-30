@@ -37,6 +37,11 @@ class TokenResponse(BaseModel):
     token_type: str = 'bearer'
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 def verify_auth(authorization: Optional[str] = Header(None)):
     if not authorization:
         raise HTTPException(status_code=401, detail='Missing authorization header')
