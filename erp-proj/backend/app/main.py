@@ -365,3 +365,144 @@ def download_job_document(document_id: int, db: Session = Depends(get_db), user:
         raise HTTPException(status_code=404, detail='Document file not found on disk')
     return FileResponse(doc.file_path, filename=doc.filename)
 
+@app.get('/job-documents', response_model=List[schemas.JobDocumentWithJobName])
+def list_all_job_documents(db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    docs = db.query(models.JobDocument).order_by(models.JobDocument.uploaded_at.desc()).all()
+    result = []
+    for doc in docs:
+        job = db.query(models.Job).filter_by(id=doc.job_id).first()
+        result.append(schemas.JobDocumentWithJobName(
+            id=doc.id, job_id=doc.job_id,
+            job_name=job.name if job else f'Job {doc.job_id}',
+            filename=doc.filename, uploaded_at=doc.uploaded_at
+        ))
+    return result
+
+# Material document endpoints
+@app.post('/material-documents/upload', response_model=schemas.MaterialDocument)
+def upload_material_document(material_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    mat = db.query(models.Material).filter_by(id=material_id).first()
+    if not mat:
+        raise HTTPException(status_code=404, detail='Material not found')
+    filename = f"matdoc_{material_id}_{file.filename}"
+    dest_path = os.path.join(UPLOAD_DIR, filename)
+    with open(dest_path, 'wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    doc = models.MaterialDocument(material_id=material_id, filename=file.filename, file_path=dest_path)
+    db.add(doc); db.commit(); db.refresh(doc)
+    return doc
+
+@app.get('/materials/{material_id}/documents', response_model=List[schemas.MaterialDocument])
+def list_material_documents(material_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    mat = db.query(models.Material).filter_by(id=material_id).first()
+    if not mat:
+        raise HTTPException(status_code=404, detail='Material not found')
+    return db.query(models.MaterialDocument).filter_by(material_id=material_id).order_by(models.MaterialDocument.uploaded_at).all()
+
+@app.delete('/material-documents/{document_id}', status_code=204)
+def delete_material_document(document_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    doc = db.query(models.MaterialDocument).filter_by(id=document_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail='Document not found')
+    if os.path.exists(doc.file_path):
+        os.remove(doc.file_path)
+    db.delete(doc); db.commit()
+    return None
+
+@app.get('/material-documents/download/{document_id}')
+def download_material_document(document_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    doc = db.query(models.MaterialDocument).filter_by(id=document_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail='Document not found')
+    if not os.path.exists(doc.file_path):
+        raise HTTPException(status_code=404, detail='File not found on disk')
+    return FileResponse(doc.file_path, filename=doc.filename)
+
+# Material PO endpoints
+@app.post('/material-pos/upload', response_model=schemas.MaterialPOFile)
+def upload_material_po(material_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    mat = db.query(models.Material).filter_by(id=material_id).first()
+    if not mat:
+        raise HTTPException(status_code=404, detail='Material not found')
+    filename = f"matpo_{material_id}_{file.filename}"
+    dest_path = os.path.join(UPLOAD_DIR, filename)
+    with open(dest_path, 'wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    po = models.MaterialPOFile(material_id=material_id, filename=file.filename, file_path=dest_path)
+    db.add(po); db.commit(); db.refresh(po)
+    return po
+
+@app.get('/materials/{material_id}/pos', response_model=List[schemas.MaterialPOFile])
+def list_material_pos(material_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    mat = db.query(models.Material).filter_by(id=material_id).first()
+    if not mat:
+        raise HTTPException(status_code=404, detail='Material not found')
+    return db.query(models.MaterialPOFile).filter_by(material_id=material_id).order_by(models.MaterialPOFile.uploaded_at).all()
+
+@app.delete('/material-pos/{po_id}', status_code=204)
+def delete_material_po(po_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    po = db.query(models.MaterialPOFile).filter_by(id=po_id).first()
+    if not po:
+        raise HTTPException(status_code=404, detail='PO not found')
+    if os.path.exists(po.file_path):
+        os.remove(po.file_path)
+    db.delete(po); db.commit()
+    return None
+
+@app.get('/material-pos/download/{po_id}')
+def download_material_po(po_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    po = db.query(models.MaterialPOFile).filter_by(id=po_id).first()
+    if not po:
+        raise HTTPException(status_code=404, detail='PO not found')
+    if not os.path.exists(po.file_path):
+        raise HTTPException(status_code=404, detail='File not found on disk')
+    return FileResponse(po.file_path, filename=po.filename)
+
+@app.get('/material-pos', response_model=List[schemas.MaterialPOWithMaterialName])
+def list_all_material_pos(db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    pos = db.query(models.MaterialPOFile).order_by(models.MaterialPOFile.uploaded_at.desc()).all()
+    result = []
+    for po in pos:
+        mat = db.query(models.Material).filter_by(id=po.material_id).first()
+        result.append(schemas.MaterialPOWithMaterialName(
+            id=po.id, material_id=po.material_id,
+            material_name=mat.name if mat else f'Material {po.material_id}',
+            filename=po.filename, uploaded_at=po.uploaded_at
+        ))
+    return result
+
+# Item PO endpoints
+@app.post('/item-pos/upload', response_model=schemas.ItemPO)
+def upload_item_po(description: str = '', file: UploadFile = File(...), db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    import time as _time
+    filename_disk = f"itempo_{int(_time.time())}_{file.filename}"
+    dest_path = os.path.join(UPLOAD_DIR, filename_disk)
+    with open(dest_path, 'wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    po = models.ItemPO(filename=file.filename, file_path=dest_path, description=description)
+    db.add(po); db.commit(); db.refresh(po)
+    return po
+
+@app.get('/item-pos', response_model=List[schemas.ItemPO])
+def list_item_pos(db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    return db.query(models.ItemPO).order_by(models.ItemPO.uploaded_at.desc()).all()
+
+@app.delete('/item-pos/{po_id}', status_code=204)
+def delete_item_po(po_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    po = db.query(models.ItemPO).filter_by(id=po_id).first()
+    if not po:
+        raise HTTPException(status_code=404, detail='Item PO not found')
+    if os.path.exists(po.file_path):
+        os.remove(po.file_path)
+    db.delete(po); db.commit()
+    return None
+
+@app.get('/item-pos/download/{po_id}')
+def download_item_po(po_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    po = db.query(models.ItemPO).filter_by(id=po_id).first()
+    if not po:
+        raise HTTPException(status_code=404, detail='Item PO not found')
+    if not os.path.exists(po.file_path):
+        raise HTTPException(status_code=404, detail='File not found on disk')
+    return FileResponse(po.file_path, filename=po.filename)
+

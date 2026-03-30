@@ -75,6 +75,7 @@ export const api = {
   },
   // job document endpoints (multi-file PO uploads)
   listJobDocuments: (jobId) => request(`/jobs/${jobId}/documents`),
+  listAllJobDocuments: () => request('/job-documents'),
   deleteJobDocument: (docId) => request(`/job-documents/${docId}`, { method: 'DELETE' }),
   downloadJobDocument: async (docId, filename) => {
     const token = store.getToken()
@@ -87,6 +88,73 @@ export const api = {
   },
   uploadJobDocument: async (jobId, file) => {
     const url = `${BASE}/job-documents/upload?job_id=${encodeURIComponent(jobId)}`
+    const fd = new FormData()
+    fd.append('file', file, file.name)
+    const token = store.getToken()
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
+    const res = await fetch(url, { method: 'POST', body: fd, headers })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+  },
+  // material document endpoints
+  listMaterialDocuments: (materialId) => request(`/materials/${materialId}/documents`),
+  deleteMaterialDocument: (docId) => request(`/material-documents/${docId}`, { method: 'DELETE' }),
+  downloadMaterialDocument: async (docId, filename) => {
+    const token = store.getToken()
+    const res = await fetch(`${BASE}/material-documents/download/${docId}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const blob = await res.blob()
+    return { url: URL.createObjectURL(blob), filename }
+  },
+  uploadMaterialDocument: async (materialId, file) => {
+    const url = `${BASE}/material-documents/upload?material_id=${encodeURIComponent(materialId)}`
+    const fd = new FormData()
+    fd.append('file', file, file.name)
+    const token = store.getToken()
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
+    const res = await fetch(url, { method: 'POST', body: fd, headers })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+  },
+  // material PO endpoints
+  listMaterialPOs: (materialId) => request(`/materials/${materialId}/pos`),
+  listAllMaterialPOs: () => request('/material-pos'),
+  deleteMaterialPO: (poId) => request(`/material-pos/${poId}`, { method: 'DELETE' }),
+  downloadMaterialPO: async (poId, filename) => {
+    const token = store.getToken()
+    const res = await fetch(`${BASE}/material-pos/download/${poId}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const blob = await res.blob()
+    return { url: URL.createObjectURL(blob), filename }
+  },
+  uploadMaterialPO: async (materialId, file) => {
+    const url = `${BASE}/material-pos/upload?material_id=${encodeURIComponent(materialId)}`
+    const fd = new FormData()
+    fd.append('file', file, file.name)
+    const token = store.getToken()
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
+    const res = await fetch(url, { method: 'POST', body: fd, headers })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+  },
+  // item PO endpoints
+  listItemPOs: () => request('/item-pos'),
+  deleteItemPO: (poId) => request(`/item-pos/${poId}`, { method: 'DELETE' }),
+  downloadItemPO: async (poId, filename) => {
+    const token = store.getToken()
+    const res = await fetch(`${BASE}/item-pos/download/${poId}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const blob = await res.blob()
+    return { url: URL.createObjectURL(blob), filename }
+  },
+  uploadItemPO: async (file, description) => {
+    const url = `${BASE}/item-pos/upload?description=${encodeURIComponent(description || '')}`
     const fd = new FormData()
     fd.append('file', file, file.name)
     const token = store.getToken()

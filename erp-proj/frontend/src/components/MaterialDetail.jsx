@@ -7,6 +7,12 @@ export default function MaterialDetail({ materialId, onBack }) {
   const [editing, setEditing] = useState(false)
   const [edited, setEdited] = useState(null)
   const [message, setMessage] = useState('')
+  const [documents, setDocuments] = useState([])
+  const [poFiles, setPoFiles] = useState([])
+  const [docUploadFiles, setDocUploadFiles] = useState([])
+  const [poUploadFiles, setPoUploadFiles] = useState([])
+  const [uploadingDoc, setUploadingDoc] = useState(false)
+  const [uploadingPO, setUploadingPO] = useState(false)
 
   useEffect(() => {
     loadMaterial()
@@ -14,14 +20,78 @@ export default function MaterialDetail({ materialId, onBack }) {
 
   const loadMaterial = async () => {
     try {
-      const res = await api.getMaterial(materialId)
+      const [res, docsRes, posRes] = await Promise.all([
+        api.getMaterial(materialId),
+        api.listMaterialDocuments(materialId),
+        api.listMaterialPOs(materialId)
+      ])
       setMaterial(res)
       setEdited(res)
+      setDocuments(docsRes || [])
+      setPoFiles(posRes || [])
     } catch (err) {
       console.error('Error loading material:', err)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleDownloadDoc = async (doc) => {
+    try {
+      const { url, filename } = await api.downloadMaterialDocument(doc.id, doc.filename)
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (err) { alert(`Download failed: ${err}`) }
+  }
+
+  const handleDeleteDoc = async (docId) => {
+    if (!window.confirm('Delete this document?')) return
+    try {
+      await api.deleteMaterialDocument(docId)
+      setDocuments(documents.filter(d => d.id !== docId))
+    } catch (err) { alert(`Delete failed: ${err}`) }
+  }
+
+  const handleUploadDocs = async () => {
+    if (docUploadFiles.length === 0) return
+    setUploadingDoc(true)
+    const files = [...docUploadFiles]
+    setDocUploadFiles([])
+    for (const file of files) {
+      try { await api.uploadMaterialDocument(materialId, file) } catch (err) { console.error(err) }
+    }
+    setUploadingDoc(false)
+    const docsRes = await api.listMaterialDocuments(materialId)
+    setDocuments(docsRes || [])
+  }
+
+  const handleDownloadPO = async (po) => {
+    try {
+      const { url, filename } = await api.downloadMaterialPO(po.id, po.filename)
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (err) { alert(`Download failed: ${err}`) }
+  }
+
+  const handleDeletePO = async (poId) => {
+    if (!window.confirm('Delete this PO?')) return
+    try {
+      await api.deleteMaterialPO(poId)
+      setPoFiles(poFiles.filter(p => p.id !== poId))
+    } catch (err) { alert(`Delete failed: ${err}`) }
+  }
+
+  const handleUploadPOs = async () => {
+    if (poUploadFiles.length === 0) return
+    setUploadingPO(true)
+    const files = [...poUploadFiles]
+    setPoUploadFiles([])
+    for (const file of files) {
+      try { await api.uploadMaterialPO(materialId, file) } catch (err) { console.error(err) }
+    }
+    setUploadingPO(false)
+    const posRes = await api.listMaterialPOs(materialId)
+    setPoFiles(posRes || [])
   }
 
   const saveMaterial = async () => {
@@ -116,6 +186,82 @@ export default function MaterialDetail({ materialId, onBack }) {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Documentation section */}
+      <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '5px', marginBottom: '20px' }}>
+        <h3 style={{ marginTop: 0 }}>Documentation ({documents.length})</h3>
+        {documents.length === 0 ? (
+          <p style={{ color: '#666' }}>No documentation uploaded</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f0f0f0' }}>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Filename</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Uploaded</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {documents.map(doc => (
+                <tr key={doc.id}>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doc.filename}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                    <button onClick={() => handleDownloadDoc(doc)} style={{ padding: '4px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}>Download</button>
+                    <button onClick={() => handleDeleteDoc(doc.id)} style={{ padding: '4px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <input type="file" multiple onChange={(e) => setDocUploadFiles(Array.from(e.target.files))} />
+          <button
+            onClick={handleUploadDocs}
+            disabled={uploadingDoc || docUploadFiles.length === 0}
+            style={{ padding: '6px 14px', backgroundColor: uploadingDoc || docUploadFiles.length === 0 ? '#aaa' : '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: uploadingDoc || docUploadFiles.length === 0 ? 'default' : 'pointer' }}
+          >{uploadingDoc ? 'Uploading...' : 'Upload'}</button>
+        </div>
+      </div>
+
+      {/* PO Documents section */}
+      <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '5px', marginBottom: '20px' }}>
+        <h3 style={{ marginTop: 0 }}>PO Documents ({poFiles.length})</h3>
+        {poFiles.length === 0 ? (
+          <p style={{ color: '#666' }}>No PO documents uploaded</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f0f0f0' }}>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Filename</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Uploaded</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {poFiles.map(po => (
+                <tr key={po.id}>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{po.filename}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{po.uploaded_at ? new Date(po.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                    <button onClick={() => handleDownloadPO(po)} style={{ padding: '4px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}>Download</button>
+                    <button onClick={() => handleDeletePO(po.id)} style={{ padding: '4px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <input type="file" multiple onChange={(e) => setPoUploadFiles(Array.from(e.target.files))} />
+          <button
+            onClick={handleUploadPOs}
+            disabled={uploadingPO || poUploadFiles.length === 0}
+            style={{ padding: '6px 14px', backgroundColor: uploadingPO || poUploadFiles.length === 0 ? '#aaa' : '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: uploadingPO || poUploadFiles.length === 0 ? 'default' : 'pointer' }}
+          >{uploadingPO ? 'Uploading...' : 'Upload'}</button>
+        </div>
       </div>
     </div>
   )

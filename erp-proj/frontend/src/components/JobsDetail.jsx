@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
 
-export default function JobsDetail({ jobId, onBack }) {
+export default function JobsDetail({ jobId, onBack, onSelectPart }) {
   const [job, setJob] = useState(null)
   const [parts, setParts] = useState([])
   const [customers, setCustomers] = useState([])
@@ -108,7 +108,12 @@ export default function JobsDetail({ jobId, onBack }) {
           <tbody>
             {parts.map(part => (
               <tr key={part.id}>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.name}</td>
+                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                  <span
+                    onClick={() => onSelectPart && onSelectPart(part.id)}
+                    style={{ color: '#0066cc', cursor: onSelectPart ? 'pointer' : 'default', textDecoration: onSelectPart ? 'underline' : 'none' }}
+                  >{part.name}</span>
+                </td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.material_type || 'N/A'}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.material_size || 'N/A'}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.status}</td>

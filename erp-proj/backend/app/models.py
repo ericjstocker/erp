@@ -89,9 +89,39 @@ class Material(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     parts = relationship('Part', back_populates='material')
+    documents = relationship('MaterialDocument', back_populates='material', cascade='all, delete-orphan')
+    po_files = relationship('MaterialPOFile', back_populates='material', cascade='all, delete-orphan')
+
+class MaterialDocument(Base):
+    __tablename__ = 'material_documents'
+    id = Column(Integer, primary_key=True, index=True)
+    material_id = Column(Integer, ForeignKey('materials.id'), nullable=False)
+    filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    material = relationship('Material', back_populates='documents')
+
+class MaterialPOFile(Base):
+    __tablename__ = 'material_po_files'
+    id = Column(Integer, primary_key=True, index=True)
+    material_id = Column(Integer, ForeignKey('materials.id'), nullable=False)
+    filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    material = relationship('Material', back_populates='po_files')
+
+class ItemPO(Base):
+    __tablename__ = 'item_po_files'
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
 
 class PurchaseOrder(Base):
-    __tablename__ = 'purchase_orders' 
+    __tablename__ = 'purchase_orders'
     id = Column(Integer, primary_key=True, index=True)
     po_number = Column(String, unique=True, nullable=False)
     vendor = Column(String, nullable=True)

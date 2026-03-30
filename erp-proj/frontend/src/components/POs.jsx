@@ -1,86 +1,214 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
 
-export default function POs(){
-  const [pos, setPos] = useState([])
-  const [jobs, setJobs] = useState([])
-  const [poNumber, setPoNumber] = useState('')
-  const [vendor, setVendor] = useState('')
-  const [jobId, setJobId] = useState('')
-  const [filter, setFilter] = useState('')
-  const [editing, setEditing] = useState(null)
+export default function POs() {
+  const [jobDocs, setJobDocs] = useState([])
+  const [materialPOs, setMaterialPOs] = useState([])
+  const [itemPOs, setItemPOs] = useState([])
+  const [itemPOFile, setItemPOFile] = useState(null)
+  const [itemPODesc, setItemPODesc] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
 
-  useEffect(()=>{ loadData() }, [])
+  useEffect(() => { loadData() }, [])
 
   const loadData = async () => {
     try {
-      const [posRes, jobsRes] = await Promise.all([
-        api.listPOs(),
-        api.listJobs()
+      const [jd, mp, ip] = await Promise.all([
+        api.listAllJobDocuments(),
+        api.listAllMaterialPOs(),
+        api.listItemPOs()
       ])
-      setPos(posRes)
-      setJobs(jobsRes)
+      setJobDocs(jd || [])
+      setMaterialPOs(mp || [])
+      setItemPOs(ip || [])
     } catch (err) {
-      console.error('Error loading data:', err)
+      console.error('Error loading POs:', err)
     }
   }
 
-  async function submit(e){
-    e.preventDefault()
-    try{
-      await api.createPO({ po_number: poNumber, vendor, job_id: jobId ? parseInt(jobId) : null })
-      await loadData()
-      setPoNumber('')
-      setVendor('')
-      setJobId('')
-    }catch(err){ alert(err) }
+  const downloadFile = async (downloadFn, id, filename) => {
+    try {
+      const { url, filename: fn } = await downloadFn(id, filename)
+      const a = document.createElement('a'); a.href = url; a.download = fn; a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (err) { alert(`Download failed: ${err}`) }
   }
 
-  async function saveEdit(poId){
-    const p = pos.find(x=>x.id===poId)
-    if(!p) return
-    const payload = { po_number: p.po_number, vendor: p.vendor, job_id: p.job_id }
-    await api.updatePO(poId, payload)
-    setEditing(null)
-    await loadData()
+  const handleUploadItemPO = async () => {
+    if (!itemPOFile) return
+    setUploading(true)
+    setError('')
+    try {
+      await api.uploadItemPO(itemPOFile, itemPODesc)
+      setItemPOFile(null)
+      setItemPODesc('')
+      const ip = await api.listItemPOs()
+      setItemPOs(ip || [])
+    } catch (err) {
+      setError(`Upload failed: ${err}`)
+    }
+    setUploading(false)
   }
+
+  const handleDeleteItemPO = async (poId) => {
+    if (!window.confirm('Delete this item PO?')) return
+    try {
+      await api.deleteItemPO(poId)
+      setItemPOs(itemPOs.filter(p => p.id !== poId))
+    } catch (err) { alert(`Delete failed: ${err}`) }
+  }
+
+  const colStyle = {
+    border: '1px solid #ddd',
+    borderRadius: '6px',
+    padding: '16px',
+    minHeight: '300px',
+    display: 'flex',
+    flexDirection: 'column'
+  }
+
+  const thStyle = { border: '1px solid #ddd', padding: '7px', textAlign: 'left', backgroundColor: '#f0f0f0', fontSize: '13px' }
+  const tdStyle = { border: '1px solid #ddd', padding: '7px', fontSize: '13px' }
 
   return (
-    <div>
-      <h2>Purchase Orders</h2>
-      <div style={{ marginBottom: 8 }}>
-        <input placeholder="Search POs" value={filter} onChange={e=>setFilter(e.target.value)} />
+    <div style={{ padding: '20px' }}>
+      <h1>Purchase Orders</h1>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', alignItems: 'start' }}>
+
+        {/* Column 1: Job POs */}
+        <div style={colStyle}>
+          <h3 style={{ marginTop: 0, borderBottom: '2px solid #0066cc', paddingBottom: '8px' }}>Job POs</h3>
+          {jobDocs.length === 0 ? (
+            <p style={{ color: '#666', fontSize: '14px' }}>No job POs uploaded yet</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Job</th>
+                  <th style={thStyle}>Filename</th>
+                  <th style={thStyle}>Date</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Download</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobDocs.map(doc => (
+                  <tr key={doc.id}>
+                    <td style={tdStyle}>{doc.job_name}</td>
+                    <td style={tdStyle}>{doc.filename}</td>
+                    <td style={tdStyle}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                    <td style={{ ...tdStyle, textAlign: 'center' }}>
+                      <button
+                        onClick={() => downloadFile(api.downloadJobDocument, doc.id, doc.filename)}
+                        style={{ padding: '3px 8px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
+                      >Download</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Column 2: Material POs */}
+        <div style={colStyle}>
+          <h3 style={{ marginTop: 0, borderBottom: '2px solid #28a745', paddingBottom: '8px' }}>Material POs</h3>
+          {materialPOs.length === 0 ? (
+            <p style={{ color: '#666', fontSize: '14px' }}>No material POs uploaded yet</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Material</th>
+                  <th style={thStyle}>Filename</th>
+                  <th style={thStyle}>Date</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Download</th>
+                </tr>
+              </thead>
+              <tbody>
+                {materialPOs.map(po => (
+                  <tr key={po.id}>
+                    <td style={tdStyle}>{po.material_name}</td>
+                    <td style={tdStyle}>{po.filename}</td>
+                    <td style={tdStyle}>{po.uploaded_at ? new Date(po.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                    <td style={{ ...tdStyle, textAlign: 'center' }}>
+                      <button
+                        onClick={() => downloadFile(api.downloadMaterialPO, po.id, po.filename)}
+                        style={{ padding: '3px 8px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
+                      >Download</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Column 3: Item POs */}
+        <div style={colStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #ff9900', paddingBottom: '8px', marginBottom: '12px' }}>
+            <h3 style={{ margin: 0 }}>Item POs</h3>
+          </div>
+
+          {/* Upload form */}
+          <div style={{ marginBottom: '16px', padding: '12px', border: '1px dashed #ff9900', borderRadius: '5px' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px', fontSize: '13px' }}>Description:</label>
+              <input
+                type="text"
+                value={itemPODesc}
+                onChange={(e) => setItemPODesc(e.target.value)}
+                placeholder="Description for this PO"
+                style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '3px', boxSizing: 'border-box', fontSize: '13px' }}
+              />
+            </div>
+            <div style={{ marginBottom: '8px' }}>
+              <input type="file" onChange={(e) => setItemPOFile(e.target.files?.[0] || null)} style={{ fontSize: '13px' }} />
+            </div>
+            <button
+              onClick={handleUploadItemPO}
+              disabled={uploading || !itemPOFile}
+              style={{ padding: '6px 14px', backgroundColor: uploading || !itemPOFile ? '#aaa' : '#ff9900', color: 'white', border: 'none', borderRadius: '3px', cursor: uploading || !itemPOFile ? 'default' : 'pointer', fontSize: '13px' }}
+            >{uploading ? 'Uploading...' : 'Upload'}</button>
+            {error && <p style={{ color: 'red', fontSize: '12px', marginTop: '6px' }}>{error}</p>}
+          </div>
+
+          {itemPOs.length === 0 ? (
+            <p style={{ color: '#666', fontSize: '14px' }}>No item POs uploaded yet</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Description</th>
+                  <th style={thStyle}>Filename</th>
+                  <th style={thStyle}>Date</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {itemPOs.map(po => (
+                  <tr key={po.id}>
+                    <td style={tdStyle}>{po.description || '—'}</td>
+                    <td style={tdStyle}>{po.filename}</td>
+                    <td style={tdStyle}>{po.uploaded_at ? new Date(po.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                    <td style={{ ...tdStyle, textAlign: 'center' }}>
+                      <button
+                        onClick={() => downloadFile(api.downloadItemPO, po.id, po.filename)}
+                        style={{ padding: '3px 8px', backgroundColor: '#ff9900', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px', marginRight: '4px' }}
+                      >Download</button>
+                      <button
+                        onClick={() => handleDeleteItemPO(po.id)}
+                        style={{ padding: '3px 8px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
+                      >Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
       </div>
-      <form onSubmit={submit} style={{ marginBottom: 12 }}>
-        <input placeholder="PO number" value={poNumber} onChange={e=>setPoNumber(e.target.value)} required />{' '}
-        <input placeholder="Vendor" value={vendor} onChange={e=>setVendor(e.target.value)} />{' '}
-        <select value={jobId} onChange={e=>setJobId(e.target.value)}>
-          <option value="">Select Job (optional)</option>
-          {jobs.map(j => (
-            <option key={j.id} value={j.id}>{j.id} - {j.name}</option>
-          ))}
-        </select>
-        <button type="submit">Create</button>
-      </form>
-      <ul>
-        {pos.filter(x=> x.po_number && x.po_number.toLowerCase().includes(filter.toLowerCase())).map(p=> (
-          <li key={p.id} style={{ marginBottom: 8 }}>
-            <strong>{p.id}</strong> — {editing===p.id ? (
-              <>
-                <input value={p.po_number} onChange={e=>{ p.po_number = e.target.value; setPos([...pos]) }} />
-                <input value={p.vendor||''} onChange={e=>{ p.vendor = e.target.value; setPos([...pos]) }} />
-                <input value={p.job_id||''} onChange={e=>{ p.job_id = e.target.value||null; setPos([...pos]) }} style={{ width: 80 }} />
-                <button onClick={()=>saveEdit(p.id)}>Save</button>
-                <button onClick={()=>setEditing(null)}>Cancel</button>
-              </>
-            ) : (
-              <>
-                {p.po_number} — vendor:{p.vendor} job:{p.job_id}
-                <button onClick={()=>setEditing(p.id)}>Edit</button>
-              </>
-            )}</li>
-        ))}
-      </ul>
     </div>
   )
 }

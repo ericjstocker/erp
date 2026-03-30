@@ -31,7 +31,8 @@ export default function Home({ onSelectJob }) {
     poNumber: ''
   })
   
-  const [parts, setParts] = useState([{ name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
+  const [parts, setParts] = useState([{ name: '', status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
+  const [jobPOFiles, setJobPOFiles] = useState([])
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -54,19 +55,20 @@ export default function Home({ onSelectJob }) {
     }
   }
 
+  const emptyPart = () => ({ name: '', status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null })
+
   const handlePartChange = (index, field, value) => {
     const newParts = [...parts]
     newParts[index] = { ...newParts[index], [field]: value }
-    setParts(newParts)
-    
-    if (index === parts.length - 1 && newParts[index].name) {
-      setParts([...newParts, { name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
+    if (index === parts.length - 1 && field === 'name' && value) {
+      newParts.push(emptyPart())
     }
+    setParts(newParts)
   }
 
-  const handleBlueprintChange = (index, file) => {
+  const handlePartMaterialChange = (index, field, value) => {
     const newParts = [...parts]
-    newParts[index].blueprint = file
+    newParts[index] = { ...newParts[index], newMaterialData: { ...newParts[index].newMaterialData, [field]: value } }
     setParts(newParts)
   }
 
@@ -120,13 +122,36 @@ export default function Home({ onSelectJob }) {
         jobId = jobData.id
       }
 
+      // Upload job PO files
+      for (const file of jobPOFiles) {
+        try { await api.uploadJobDocument(jobId, file) } catch (err) { console.error('Job PO upload error:', err) }
+      }
+
       // Create parts
       for (const part of parts.filter(p => p.name)) {
+        let materialId = null
+        if (part.newMaterial && part.newMaterialData.name) {
+          const matRes = await api.createMaterial({
+            name: part.newMaterialData.name,
+            material_type: part.newMaterialData.material_type,
+            shape: part.newMaterialData.shape,
+            diameter: part.newMaterialData.diameter,
+            length: part.newMaterialData.length,
+            width: part.newMaterialData.width,
+            height: part.newMaterialData.height,
+            purchase_location: part.newMaterialData.purchase_location
+          })
+          materialId = matRes.id
+          if (part.newMaterialPOFile) {
+            try { await api.uploadMaterialPO(materialId, part.newMaterialPOFile) } catch (err) { console.error('Material PO upload error:', err) }
+          }
+        } else if (!part.newMaterial && part.materialId) {
+          materialId = parseInt(part.materialId)
+        }
         const partRes = await api.createPart({
           job_id: jobId,
           name: part.name,
-          material_type: part.material_type,
-          material_size: part.material_size,
+          material_id: materialId,
           status: part.status
         })
 
@@ -145,7 +170,8 @@ export default function Home({ onSelectJob }) {
         setNewJob(false)
         setCustomerData({ id: '', name: '', point_of_contact: '', phone_number: '', email: '', notes: '' })
         setJobData({ id: '', name: '', description: '', dueDate: '', receivedDate: '', poNumber: '' })
-        setParts([{ name: '', material_type: '', material_size: '', status: 'pending', blueprint: null }])
+        setParts([{ name: '', status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
+        setJobPOFiles([])
         loadData()
       }, 1500)
     } catch (err) {
@@ -380,9 +406,21 @@ export default function Home({ onSelectJob }) {
           )}
         </div>
 
+        {/* Job PO Upload */}
+        <div style={{ marginBottom: '20px', padding: '12px', border: `1px dashed ${accentColor}`, borderRadius: '6px' }}>
+          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Upload Job PO(s):</label>
+          <input
+            type="file"
+            multiple
+            onChange={(e) => setJobPOFiles(Array.from(e.target.files))}
+            style={{ marginBottom: '4px' }}
+          />
+          {jobPOFiles.length > 0 && <span style={{ fontSize: '13px', color: '#555' }}>{jobPOFiles.length} file(s) selected</span>}
+        </div>
+
         {/* Parts Section */}
         <div style={{ marginBottom: '20px' }}>
-          <h4 style={{ marginTop: '20px' }}>Parts</h4>
+          <h4 style={{ marginTop: '0' }}>Parts</h4>
           {parts.map((part, index) => (
             <div key={index} style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: `1px solid ${accentColor}` }}>
               <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
@@ -395,32 +433,71 @@ export default function Home({ onSelectJob }) {
                   style={{...inputStyle, width: '100%'}}
                 />
               </div>
-              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
-                <label style={{ fontWeight: 'bold' }}>Material Type:</label>
-                <select
-                  value={part.material_type}
-                  onChange={(e) => handlePartChange(index, 'material_type', e.target.value)}
-                  style={{...selectStyle, width: '100%'}}
-                >
-                  <option value="">Material Type</option>
-                  {materials.map(m => (
-                    <option key={m.id} value={m.material_type}>{m.material_type}</option>
-                  ))}
-                </select>
+
+              {/* New Material? checkbox */}
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={part.newMaterial}
+                    onChange={(e) => handlePartChange(index, 'newMaterial', e.target.checked)}
+                    style={{ marginRight: '10px', cursor: 'pointer' }}
+                  />
+                  <span>New Material?</span>
+                </label>
               </div>
-              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
-                <label style={{ fontWeight: 'bold' }}>Material Size:</label>
-                <select
-                  value={part.material_size}
-                  onChange={(e) => handlePartChange(index, 'material_size', e.target.value)}
-                  style={{...selectStyle, width: '100%'}}
-                >
-                  <option value="">Material Size</option>
-                  {materials.map(m => (
-                    <option key={m.id} value={m.material_size}>{m.material_size}</option>
+
+              {!part.newMaterial ? (
+                <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                  <label style={{ fontWeight: 'bold' }}>Material:</label>
+                  <select
+                    value={part.materialId}
+                    onChange={(e) => handlePartChange(index, 'materialId', e.target.value)}
+                    style={{...selectStyle, width: '100%'}}
+                  >
+                    <option value="">Select Material (optional)</option>
+                    {materials.map(m => (
+                      <option key={m.id} value={m.id}>{m.name}{m.material_type ? ` — ${m.material_type}` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div style={{ paddingLeft: '12px', borderLeft: `3px solid ${accentColor}`, marginBottom: '10px' }}>
+                  {[
+                    ['Material Name *', 'name', 'text', 'e.g., Steel Sheet'],
+                    ['Material Type', 'material_type', 'text', 'e.g., Carbon Steel'],
+                    ['Shape', 'shape', 'text', 'e.g., Round Bar, Sheet'],
+                    ['Diameter', 'diameter', 'text', 'e.g., 1.5in'],
+                    ['Length', 'length', 'text', 'e.g., 12ft'],
+                    ['Width', 'width', 'text', 'e.g., 24in'],
+                    ['Height', 'height', 'text', 'e.g., 0.25in'],
+                    ['Purchase Location', 'purchase_location', 'text', 'Where purchased'],
+                  ].map(([label, field, type, placeholder]) => (
+                    <div key={field} style={{ marginBottom: '8px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                      <label style={{ fontWeight: 'bold', fontSize: '13px' }}>{label}:</label>
+                      <input
+                        type={type}
+                        placeholder={placeholder}
+                        value={part.newMaterialData[field]}
+                        onChange={(e) => handlePartMaterialChange(index, field, e.target.value)}
+                        style={{...inputStyle, width: '100%'}}
+                      />
+                    </div>
                   ))}
-                </select>
-              </div>
+                  <div style={{ marginBottom: '8px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                    <label style={{ fontWeight: 'bold', fontSize: '13px' }}>Upload Material PO:</label>
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        const newParts = [...parts]
+                        newParts[index] = { ...newParts[index], newMaterialPOFile: e.target.files?.[0] || null }
+                        setParts(newParts)
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
                 <label style={{ fontWeight: 'bold' }}>Status:</label>
                 <select
@@ -428,7 +505,7 @@ export default function Home({ onSelectJob }) {
                   onChange={(e) => handlePartChange(index, 'status', e.target.value)}
                   style={{...selectStyle, width: '100%'}}
                 >
-                  <option value="pending">Status: Pending</option>
+                  <option value="pending">Pending</option>
                   <option value="in_progress">In Progress</option>
                   <option value="completed">Completed</option>
                 </select>
@@ -437,7 +514,11 @@ export default function Home({ onSelectJob }) {
                 <span style={{ fontWeight: 'bold' }}>Blueprint:</span>
                 <input
                   type="file"
-                  onChange={(e) => handleBlueprintChange(index, e.target.files?.[0])}
+                  onChange={(e) => {
+                    const newParts = [...parts]
+                    newParts[index] = { ...newParts[index], blueprint: e.target.files?.[0] || null }
+                    setParts(newParts)
+                  }}
                   style={{ marginLeft: '8px' }}
                 />
               </label>

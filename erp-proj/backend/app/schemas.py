@@ -64,6 +64,44 @@ class JobDocument(BaseModel):
     class Config:
         from_attributes = True
 
+class JobDocumentWithJobName(BaseModel):
+    id: int
+    job_id: int
+    job_name: str
+    filename: str
+    uploaded_at: Optional[datetime] = None
+
+class MaterialDocument(BaseModel):
+    id: int
+    material_id: int
+    filename: str
+    uploaded_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
+class MaterialPOFile(BaseModel):
+    id: int
+    material_id: int
+    filename: str
+    uploaded_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
+class MaterialPOWithMaterialName(BaseModel):
+    id: int
+    material_id: int
+    material_name: str
+    filename: str
+    uploaded_at: Optional[datetime] = None
+
+class ItemPO(BaseModel):
+    id: int
+    filename: str
+    description: Optional[str] = None
+    uploaded_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
 class Part(PartBase):
     id: int
     blueprint_path: Optional[str] = None

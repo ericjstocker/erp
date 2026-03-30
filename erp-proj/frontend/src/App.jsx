@@ -42,7 +42,7 @@ function AppContent() {
         return <CustomersDetail customerId={selectedId.id} onBack={handleBackFromDetail} onSelectJob={(id) => handleSelectItem(id, 'job')} onSelectPart={(id) => handleSelectItem(id, 'part')} />
       }
       if (selectedId.itemType === 'job') {
-        return <JobsDetail jobId={selectedId.id} onBack={handleBackFromDetail} />
+        return <JobsDetail jobId={selectedId.id} onBack={handleBackFromDetail} onSelectPart={(id) => handleSelectItem(id, 'part')} />
       }
       if (selectedId.itemType === 'part') {
         return <PartsDetail partId={selectedId.id} onBack={handleBackFromDetail} />
