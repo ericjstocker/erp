@@ -55,6 +55,13 @@ def verify_auth(authorization: Optional[str] = Header(None)):
     return username
 
 
+def get_admin_password_hash(db: Session) -> str:
+    setting = db.query(models.SystemSetting).filter_by(key='admin_password_hash').first()
+    if setting:
+        return setting.value
+    return auth.hash_password(auth.ADMIN_PASSWORD)
+
+
 @app.post('/login', response_model=TokenResponse)
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     if req.username != auth.ADMIN_USER:
