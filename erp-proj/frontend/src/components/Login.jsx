@@ -3,8 +3,8 @@ import api from '../api'
 import store from '../store'
 
 export default function Login({ onLogin }) {
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('admin123')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -39,7 +39,7 @@ export default function Login({ onLogin }) {
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         width: 300
       }}>
-        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Small Shop ERP</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Carter Components</h2>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>Username</label>
@@ -75,9 +75,6 @@ export default function Login({ onLogin }) {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <p style={{ textAlign: 'center', fontSize: 12, marginTop: 16, color: '#666' }}>
-          Demo: admin / admin123
-        </p>
       </div>
     </div>
   )

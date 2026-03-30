@@ -7,7 +7,11 @@ export default function Material({ onSelectMaterial }) {
   const [newMaterial, setNewMaterial] = useState({
     name: '',
     material_type: '',
-    material_size: '',
+    shape: '',
+    diameter: '',
+    length: '',
+    width: '',
+    height: '',
     purchase_location: '',
     provider_info: '',
     po_number: '',
@@ -15,6 +19,12 @@ export default function Material({ onSelectMaterial }) {
   })
   const [editing, setEditing] = useState(null)
   const [message, setMessage] = useState('')
+  const [filters, setFilters] = useState({
+    name: '', material_type: '', shape: '', diameter: '',
+    length: '', width: '', height: '', po_number: '',
+    purchase_location: '', provider_info: ''
+  })
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     loadMaterials()
@@ -47,13 +57,17 @@ export default function Material({ onSelectMaterial }) {
       await api.createMaterial({
         name: newMaterial.name,
         material_type: newMaterial.material_type,
-        material_size: newMaterial.material_size,
+        shape: newMaterial.shape,
+        diameter: newMaterial.diameter,
+        length: newMaterial.length,
+        width: newMaterial.width,
+        height: newMaterial.height,
         purchase_location: newMaterial.purchase_location,
         provider_info: newMaterial.provider_info,
         po_number: newMaterial.po_number
       })
       setMessage('Material created successfully!')
-      setNewMaterial({ name: '', material_type: '', material_size: '', purchase_location: '', provider_info: '', po_number: '', doc: null })
+      setNewMaterial({ name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '', provider_info: '', po_number: '', doc: null })
       setShowNewMaterialForm(false)
       loadMaterials()
     } catch (err) {
@@ -68,7 +82,11 @@ export default function Material({ onSelectMaterial }) {
       await api.updateMaterial(matId, {
         name: mat.name,
         material_type: mat.material_type,
-        material_size: mat.material_size,
+        shape: mat.shape,
+        diameter: mat.diameter,
+        length: mat.length,
+        width: mat.width,
+        height: mat.height,
         purchase_location: mat.purchase_location,
         provider_info: mat.provider_info,
         po_number: mat.po_number
@@ -80,6 +98,32 @@ export default function Material({ onSelectMaterial }) {
       setMessage(`Error updating material: ${err.message}`)
     }
   }
+
+  const deleteMaterial = async (id, name) => {
+    if (!window.confirm(`Delete material "${name}"?`)) return
+    try {
+      await api.deleteMaterial(id)
+      setMessage(`"${name}" deleted.`)
+      loadMaterials()
+    } catch (err) {
+      setMessage(`Error deleting: ${err.message}`)
+    }
+  }
+
+  const filteredMaterials = materials.filter(m => {
+    return (
+      m.name?.toLowerCase().includes(filters.name.toLowerCase()) &&
+      (m.material_type || '').toLowerCase().includes(filters.material_type.toLowerCase()) &&
+      (m.shape || '').toLowerCase().includes(filters.shape.toLowerCase()) &&
+      (m.diameter || '').toLowerCase().includes(filters.diameter.toLowerCase()) &&
+      (m.length || '').toLowerCase().includes(filters.length.toLowerCase()) &&
+      (m.width || '').toLowerCase().includes(filters.width.toLowerCase()) &&
+      (m.height || '').toLowerCase().includes(filters.height.toLowerCase()) &&
+      (m.po_number || '').toLowerCase().includes(filters.po_number.toLowerCase()) &&
+      (m.purchase_location || '').toLowerCase().includes(filters.purchase_location.toLowerCase()) &&
+      (m.provider_info || '').toLowerCase().includes(filters.provider_info.toLowerCase())
+    )
+  })
 
   return (
     <div style={{ padding: '20px' }}>
@@ -104,8 +148,24 @@ export default function Material({ onSelectMaterial }) {
             <input type="text" name="material_type" value={newMaterial.material_type} onChange={handleMaterialChange} placeholder="e.g., Carbon Steel" />
           </div>
           <div style={{ marginBottom: '10px' }}>
-            <label>Material Size: </label>
-            <input type="text" name="material_size" value={newMaterial.material_size} onChange={handleMaterialChange} placeholder="e.g., 1/4in x 12in x 24in" />
+            <label>Shape: </label>
+            <input type="text" name="shape" value={newMaterial.shape} onChange={handleMaterialChange} placeholder="e.g., Round Bar, Sheet, Tube" />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Diameter: </label>
+            <input type="text" name="diameter" value={newMaterial.diameter} onChange={handleMaterialChange} placeholder="e.g., 1.5in" />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Length: </label>
+            <input type="text" name="length" value={newMaterial.length} onChange={handleMaterialChange} placeholder="e.g., 12ft" />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Width: </label>
+            <input type="text" name="width" value={newMaterial.width} onChange={handleMaterialChange} placeholder="e.g., 24in" />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Height: </label>
+            <input type="text" name="height" value={newMaterial.height} onChange={handleMaterialChange} placeholder="e.g., 0.25in" />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>PO Number: </label>
@@ -131,9 +191,56 @@ export default function Material({ onSelectMaterial }) {
 
       {message && <p style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#ffffcc', border: '1px solid #cccc00', borderRadius: '3px' }}>{message}</p>}
 
-      <h2>All Materials ({materials.length})</h2>
+      <div style={{ marginBottom: '16px' }}>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          style={{ padding: '8px 16px', backgroundColor: showFilters ? '#555' : '#444', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+        >
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+        {showFilters && (
+          <button
+            onClick={() => setFilters({ name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', po_number: '', purchase_location: '', provider_info: '' })}
+            style={{ marginLeft: '8px', padding: '8px 16px', backgroundColor: '#cc0000', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
+
+      {showFilters && (
+        <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #aaa', borderRadius: '5px', backgroundColor: '#f9f9f9', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+          {[
+            ['Name', 'name'],
+            ['Type', 'material_type'],
+            ['Shape', 'shape'],
+            ['Diameter', 'diameter'],
+            ['Length', 'length'],
+            ['Width', 'width'],
+            ['Height', 'height'],
+            ['PO #', 'po_number'],
+            ['Purchase Location', 'purchase_location'],
+            ['Provider', 'provider_info'],
+          ].map(([label, key]) => (
+            <div key={key}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '3px' }}>{label}</label>
+              <input
+                type="text"
+                value={filters[key]}
+                onChange={(e) => setFilters(prev => ({ ...prev, [key]: e.target.value }))}
+                placeholder={`Filter by ${label.toLowerCase()}...`}
+                style={{ width: '100%', padding: '5px', border: '1px solid #ccc', borderRadius: '3px', boxSizing: 'border-box' }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <h2>All Materials ({filteredMaterials.length}{filteredMaterials.length !== materials.length ? ` of ${materials.length}` : ''})</h2>
       {materials.length === 0 ? (
         <p>No materials found</p>
+      ) : filteredMaterials.length === 0 ? (
+        <p>No materials match the current filters.</p>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -141,7 +248,9 @@ export default function Material({ onSelectMaterial }) {
               <tr style={{ backgroundColor: '#f0f0f0' }}>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Name</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Type</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Size</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Shape</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Diameter</th>
+                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>L x W x H</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>PO #</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Purchase Location</th>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Provider</th>
@@ -150,11 +259,13 @@ export default function Material({ onSelectMaterial }) {
               </tr>
             </thead>
             <tbody>
-              {materials.map(material => (
+              {filteredMaterials.map(material => (
                 <tr key={material.id} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.name}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.material_type || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.material_size || 'N/A'}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.shape || 'N/A'}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.diameter || 'N/A'}</td>
+                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{[material.length, material.width, material.height].filter(Boolean).join(' x ') || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.po_number || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.purchase_location || 'N/A'}</td>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.provider_info || 'N/A'}</td>
@@ -168,9 +279,15 @@ export default function Material({ onSelectMaterial }) {
                     </button>
                     <button
                       onClick={() => setEditing(material.id)}
-                      style={{ padding: '5px 10px', backgroundColor: '#ff9900', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+                      style={{ padding: '5px 10px', backgroundColor: '#ff9900', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}
                     >
                       Edit
+                    </button>
+                    <button
+                      onClick={() => deleteMaterial(material.id, material.name)}
+                      style={{ padding: '5px 10px', backgroundColor: '#cc0000', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+                    >
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -194,8 +311,24 @@ export default function Material({ onSelectMaterial }) {
                 <input value={m.material_type || ''} onChange={(e) => { m.material_type = e.target.value; setMaterials([...materials]) }} />
               </div>
               <div style={{ marginBottom: '10px' }}>
-                <label>Size: </label>
-                <input value={m.material_size || ''} onChange={(e) => { m.material_size = e.target.value; setMaterials([...materials]) }} />
+                <label>Shape: </label>
+                <input value={m.shape || ''} onChange={(e) => { m.shape = e.target.value; setMaterials([...materials]) }} />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label>Diameter: </label>
+                <input value={m.diameter || ''} onChange={(e) => { m.diameter = e.target.value; setMaterials([...materials]) }} />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label>Length: </label>
+                <input value={m.length || ''} onChange={(e) => { m.length = e.target.value; setMaterials([...materials]) }} />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label>Width: </label>
+                <input value={m.width || ''} onChange={(e) => { m.width = e.target.value; setMaterials([...materials]) }} />
+              </div>
+              <div style={{ marginBottom: '10px' }}>
+                <label>Height: </label>
+                <input value={m.height || ''} onChange={(e) => { m.height = e.target.value; setMaterials([...materials]) }} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>PO Number: </label>

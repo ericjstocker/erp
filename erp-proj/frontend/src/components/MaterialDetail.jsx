@@ -29,7 +29,11 @@ export default function MaterialDetail({ materialId, onBack }) {
       await api.updateMaterial(materialId, {
         name: edited.name,
         material_type: edited.material_type,
-        material_size: edited.material_size,
+        shape: edited.shape,
+        diameter: edited.diameter,
+        length: edited.length,
+        width: edited.width,
+        height: edited.height,
         purchase_location: edited.purchase_location,
         provider_info: edited.provider_info,
         po_number: edited.po_number
@@ -82,7 +86,11 @@ export default function MaterialDetail({ materialId, onBack }) {
 
         {field('Material Name', 'name')}
         {field('Material Type', 'material_type')}
-        {field('Material Size', 'material_size')}
+        {field('Shape', 'shape')}
+        {field('Diameter', 'diameter')}
+        {field('Length', 'length')}
+        {field('Width', 'width')}
+        {field('Height', 'height')}
         {field('PO Number', 'po_number')}
         {field('Purchase Location', 'purchase_location')}
         {field('Provider Info', 'provider_info')}

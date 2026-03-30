@@ -22,11 +22,13 @@ async function request(path, opts = {}) {
     }
     throw new Error(txt || res.status)
   }
+  if (res.status === 204) return null
   return res.headers.get('content-type')?.includes('application/json') ? res.json() : res.text()
 }
 
 export const api = {
   login: (username, password) => request('/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  changePassword: (current_password, new_password) => request('/auth/change-password', { method: 'POST', body: JSON.stringify({ current_password, new_password }) }),
   listCustomers: () => request('/customers'),
   getCustomer: (id) => request(`/customers/${id}`),
   getCustomerJobs: (id) => request(`/customers/${id}/jobs`),
@@ -54,6 +56,7 @@ export const api = {
   listMaterials: () => request('/materials'),
   getMaterial: (id) => request(`/materials/${id}`),
   createMaterial: (body) => request('/materials', { method: 'POST', body: JSON.stringify(body) }),
+  deleteMaterial: (id) => request(`/materials/${id}`, { method: 'DELETE' }),
   listPOs: () => request('/pos'),
   createPO: (body) => request('/pos', { method: 'POST', body: JSON.stringify(body) }),
   updatePO: (id, body) => request(`/pos/${id}`, { method: 'PUT', body: JSON.stringify(body) }),

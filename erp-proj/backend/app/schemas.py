@@ -59,7 +59,11 @@ class Part(PartBase):
 class MaterialBase(BaseModel):
     name: str
     material_type: Optional[str] = None
-    material_size: Optional[str] = None
+    shape: Optional[str] = None
+    diameter: Optional[str] = None
+    length: Optional[str] = None
+    width: Optional[str] = None
+    height: Optional[str] = None
     purchase_location: Optional[str] = None
     provider_info: Optional[str] = None
     po_number: Optional[str] = None

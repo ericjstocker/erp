@@ -53,7 +53,11 @@ class Material(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     material_type = Column(String, nullable=True)
-    material_size = Column(String, nullable=True)
+    shape = Column(String, nullable=True)
+    diameter = Column(String, nullable=True)
+    length = Column(String, nullable=True)
+    width = Column(String, nullable=True)
+    height = Column(String, nullable=True)
     purchase_location = Column(String, nullable=True)
     provider_info = Column(String, nullable=True)
     po_number = Column(String, nullable=True)
@@ -76,3 +80,9 @@ class PurchaseOrder(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     job = relationship('Job', back_populates='purchase_orders')
+
+class SystemSetting(Base):
+    __tablename__ = 'system_settings'
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, nullable=False)
+    value = Column(String, nullable=False)

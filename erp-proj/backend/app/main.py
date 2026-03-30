@@ -12,7 +12,7 @@ from .database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Small Shop ERP - Backend")
+app = FastAPI(title="Carter Components - Backend")
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,11 +51,31 @@ def verify_auth(authorization: Optional[str] = Header(None)):
 
 
 @app.post('/login', response_model=TokenResponse)
-def login(req: LoginRequest):
-    if req.username != auth.ADMIN_USER or req.password != auth.ADMIN_PASSWORD:
+def login(req: LoginRequest, db: Session = Depends(get_db)):
+    if req.username != auth.ADMIN_USER:
+        raise HTTPException(status_code=401, detail='Invalid credentials')
+    stored_hash = get_admin_password_hash(db)
+    if not auth.verify_password(req.password, stored_hash):
         raise HTTPException(status_code=401, detail='Invalid credentials')
     token = auth.create_access_token(req.username)
     return TokenResponse(access_token=token)
+
+@app.post('/auth/change-password')
+def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    stored_hash = get_admin_password_hash(db)
+    if not auth.verify_password(req.current_password, stored_hash):
+        raise HTTPException(status_code=400, detail='Current password is incorrect')
+    if len(req.new_password) < 8:
+        raise HTTPException(status_code=400, detail='New password must be at least 8 characters')
+    new_hash = auth.hash_password(req.new_password)
+    setting = db.query(models.SystemSetting).filter_by(key='admin_password_hash').first()
+    if setting:
+        setting.value = new_hash
+    else:
+        setting = models.SystemSetting(key='admin_password_hash', value=new_hash)
+        db.add(setting)
+    db.commit()
+    return {'message': 'Password changed successfully'}
 
 
 # Customers (protected)
@@ -209,7 +229,15 @@ def update_material(material_id: int, mat: schemas.MaterialCreate, db: Session =
     db.refresh(db_mat)
     return db_mat
 
-# Purchase Orders (protected)
+@app.delete('/materials/{material_id}', status_code=204)
+def delete_material(material_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_mat = db.query(models.Material).filter_by(id=material_id).first()
+    if not db_mat:
+        raise HTTPException(status_code=404, detail='Material not found')
+    db.delete(db_mat)
+    db.commit()
+    return None
+
 @app.post('/pos', response_model=schemas.PO)
 def create_po(po: schemas.POCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     # simple uniqueness check for po_number

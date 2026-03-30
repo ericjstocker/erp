@@ -12,6 +12,7 @@ import PartsDetail from './components/PartsDetail'
 import POs from './components/POs'
 import Material from './components/Material'
 import MaterialDetail from './components/MaterialDetail'
+import ChangePassword from './components/ChangePassword'
 
 function AppContent() {
   const { theme, accentColor, setAccentColor, toggleTheme, currentTheme } = useTheme()
@@ -52,6 +53,9 @@ function AppContent() {
     }
 
     // List views
+    if (view === 'changepassword') {
+      return <ChangePassword onBack={() => setView('home')} />
+    }
     switch (view) {
       case 'home':
         return <Home onSelectJob={(id) => handleSelectItem(id, 'job')} />
@@ -79,7 +83,7 @@ function AppContent() {
       minHeight: '100vh'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1>Small Shop ERP</h1>
+        <h1>Carter Components</h1>
         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <label style={{ fontSize: '14px' }}>Theme:</label>
@@ -108,6 +112,7 @@ function AppContent() {
               title="Choose accent color"
             />
           </div>
+          <button onClick={() => { setView('changepassword'); setDetailView(false) }} style={{ padding: '8px 16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Change Password</button>
           <button onClick={() => { store.logout(); setLoggedIn(false) }} style={{ padding: '8px 16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Logout</button>
         </div>
       </div>
