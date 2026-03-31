@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -11,6 +11,7 @@ class Customer(Base):
     phone_number = Column(String, nullable=True)
     email = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
+    is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -21,10 +22,12 @@ class Job(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
+    po_number = Column(String, nullable=True)
     customer_id = Column(Integer, ForeignKey('customers.id'))
     received_date = Column(Date, nullable=True)
     due_date = Column(Date, nullable=True)
     status = Column(String, default='queued')
+    is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -43,6 +46,7 @@ class Part(Base):
     material_size = Column(String, nullable=True)
     status = Column(String, default='pending')
     material_id = Column(Integer, ForeignKey('materials.id'), nullable=True)
+    is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -8,6 +8,7 @@ class CustomerBase(BaseModel):
     phone_number: Optional[str] = None
     email: Optional[str] = None
     notes: Optional[str] = None
+    is_archived: Optional[bool] = False
 
 class CustomerCreate(CustomerBase):
     pass
@@ -22,10 +23,12 @@ class Customer(CustomerBase):
 class JobBase(BaseModel):
     name: str
     description: Optional[str] = None
+    po_number: Optional[str] = None
     customer_id: Optional[int] = None
     received_date: Optional[date] = None
     due_date: Optional[date] = None
     status: Optional[str] = None
+    is_archived: Optional[bool] = False
 
 class JobCreate(JobBase):
     pass
@@ -44,6 +47,7 @@ class PartBase(BaseModel):
     material_type: Optional[str] = None
     material_size: Optional[str] = None
     status: Optional[str] = None
+    is_archived: Optional[bool] = False
 
 class PartCreate(PartBase):
     pass

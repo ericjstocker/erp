@@ -72,6 +72,41 @@ export default function Home({ onSelectJob }) {
     setParts(newParts)
   }
 
+  const handleSubmitNewMaterialForPart = async (index) => {
+    const part = parts[index]
+    if (!part.newMaterialData.name) { setMessage('Material name is required'); return }
+    try {
+      const matRes = await api.createMaterial({
+        name: part.newMaterialData.name,
+        material_type: part.newMaterialData.material_type,
+        shape: part.newMaterialData.shape,
+        diameter: part.newMaterialData.diameter,
+        length: part.newMaterialData.length,
+        width: part.newMaterialData.width,
+        height: part.newMaterialData.height,
+        purchase_location: part.newMaterialData.purchase_location
+      })
+      if (part.newMaterialPOFile) {
+        try { await api.uploadMaterialPO(matRes.id, part.newMaterialPOFile) } catch (err) { console.error('Material PO upload error:', err) }
+      }
+      // Add to materials list and switch part to dropdown with new material selected
+      setMaterials(prev => [...prev, matRes])
+      const newParts = [...parts]
+      newParts[index] = {
+        ...newParts[index],
+        newMaterial: false,
+        materialId: String(matRes.id),
+        newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' },
+        newMaterialPOFile: null
+      }
+      setParts(newParts)
+      setMessage(`Material "${matRes.name}" saved successfully!`)
+      setTimeout(() => setMessage(''), 2000)
+    } catch (err) {
+      setMessage(`Error saving material: ${err.message}`)
+    }
+  }
+
   const submitForm = async () => {
     try {
       let customerId = customerData.id
@@ -495,6 +530,14 @@ export default function Home({ onSelectJob }) {
                       }}
                     />
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSubmitNewMaterialForPart(index)}
+                    disabled={!part.newMaterialData.name}
+                    style={{ marginTop: '8px', padding: '7px 16px', backgroundColor: !part.newMaterialData.name ? '#aaa' : '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: !part.newMaterialData.name ? 'default' : 'pointer', fontSize: '13px' }}
+                  >
+                    Submit New Material
+                  </button>
                 </div>
               )}
 

@@ -5,6 +5,7 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
   const [job, setJob] = useState(null)
   const [parts, setParts] = useState([])
   const [customers, setCustomers] = useState([])
+  const [materials, setMaterials] = useState([])
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploadFiles, setUploadFiles] = useState([])
@@ -17,16 +18,18 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
 
   const loadJobData = async () => {
     try {
-      const [jobRes, partsRes, customersRes, docsRes] = await Promise.all([
+      const [jobRes, partsRes, customersRes, docsRes, materialsRes] = await Promise.all([
         api.getJob(jobId),
         api.getJobParts(jobId),
         api.listCustomers(),
-        api.listJobDocuments(jobId)
+        api.listJobDocuments(jobId),
+        api.listMaterials()
       ])
       setJob(jobRes)
       setParts(partsRes)
       setCustomers(customersRes)
       setDocuments(docsRes || [])
+      setMaterials(materialsRes || [])
     } catch (err) {
       console.error('Error loading job data:', err)
     } finally {
@@ -38,6 +41,9 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
     const c = customers.find(c => c.id === customerId)
     return c ? c.name : 'N/A'
   }
+
+  const getMaterialName = (matId) => { const m = materials.find(m => m.id === matId); return m ? m.name : 'N/A' }
+  const getMaterialShape = (matId) => { const m = materials.find(m => m.id === matId); return m ? (m.shape || 'N/A') : 'N/A' }
 
   const handleDownload = async (doc) => {
     try {
@@ -99,8 +105,8 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
           <thead>
             <tr style={{ backgroundColor: '#f0f0f0' }}>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Part Name</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Type</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Size</th>
+              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Name</th>
+              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Shape</th>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
               <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Created</th>
             </tr>
@@ -114,8 +120,8 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
                     style={{ color: '#0066cc', cursor: onSelectPart ? 'pointer' : 'default', textDecoration: onSelectPart ? 'underline' : 'none' }}
                   >{part.name}</span>
                 </td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.material_type || 'N/A'}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.material_size || 'N/A'}</td>
+                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getMaterialName(part.material_id)}</td>
+                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getMaterialShape(part.material_id)}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.status}</td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{new Date(part.created_at).toLocaleDateString()}</td>
               </tr>

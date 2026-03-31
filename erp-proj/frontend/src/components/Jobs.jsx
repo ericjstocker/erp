@@ -6,6 +6,8 @@ export default function Jobs({ onSelectJob }) {
   const [customers, setCustomers] = useState([])
   const [parts, setParts] = useState([])
   const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [poNumber, setPoNumber] = useState('')
   const [customerId, setCustomerId] = useState('')
   const [selectedParts, setSelectedParts] = useState([])
   const [filter, setFilter] = useState('')
@@ -13,6 +15,8 @@ export default function Jobs({ onSelectJob }) {
   const [createDocFiles, setCreateDocFiles] = useState([])
   const [editDocFiles, setEditDocFiles] = useState([])
   const [editDocs, setEditDocs] = useState([])
+  const [showArchive, setShowArchive] = useState(false)
+  const [archivedJobs, setArchivedJobs] = useState([])
 
   useEffect(() => {
     loadData()
@@ -38,6 +42,8 @@ export default function Jobs({ onSelectJob }) {
     try {
       const newJob = await api.createJob({ 
         name, 
+        description: description || null,
+        po_number: poNumber || null,
         customer_id: customerId ? parseInt(customerId) : null,
         status: 'queued'
       })
@@ -47,6 +53,8 @@ export default function Jobs({ onSelectJob }) {
         }
       }
       setName('')
+      setDescription('')
+      setPoNumber('')
       setCustomerId('')
       setSelectedParts([])
       setCreateDocFiles([])
@@ -103,6 +111,32 @@ export default function Jobs({ onSelectJob }) {
     }
   }
 
+  async function handleArchive(jobId) {
+    if (!window.confirm('Archive this job?')) return
+    try { await api.archiveJob(jobId); loadData() } catch (err) { alert(`Error: ${err}`) }
+  }
+
+  async function handleDelete(jobId) {
+    if (!window.confirm('Permanently delete this job? This cannot be undone.')) return
+    try { await api.deleteJob(jobId); loadData() } catch (err) { alert(`Error: ${err}`) }
+  }
+
+  async function openArchive() {
+    try { const res = await api.listArchivedJobs(); setArchivedJobs(res || []); setShowArchive(true) }
+    catch (err) { alert(`Error loading archive: ${err}`) }
+  }
+
+  async function handleRestore(jobId) {
+    try { await api.restoreJob(jobId); setArchivedJobs(archivedJobs.filter(j => j.id !== jobId)) }
+    catch (err) { alert(`Error: ${err}`) }
+  }
+
+  async function handleDeleteArchived(jobId) {
+    if (!window.confirm('Permanently delete this job?')) return
+    try { await api.deleteJob(jobId); setArchivedJobs(archivedJobs.filter(j => j.id !== jobId)) }
+    catch (err) { alert(`Error: ${err}`) }
+  }
+
   async function downloadEditDoc(doc) {
     try {
       const { url, filename } = await api.downloadJobDocument(doc.id, doc.filename)
@@ -139,6 +173,24 @@ export default function Jobs({ onSelectJob }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Job name"
               required
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label style={{ display: 'block', marginBottom: '4px' }}>Description: </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Job description"
+              style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '14px', minHeight: '60px', resize: 'vertical', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>PO#: </label>
+            <input
+              type="text"
+              value={poNumber}
+              onChange={(e) => setPoNumber(e.target.value)}
+              placeholder="Purchase Order number"
             />
           </div>
           <div style={{ marginBottom: '10px' }}>
@@ -180,7 +232,10 @@ export default function Jobs({ onSelectJob }) {
       </div>
 
       {/* Jobs Table */}
-      <h2>All Jobs ({filteredJobs.length})</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <h2 style={{ margin: 0 }}>All Jobs ({filteredJobs.length})</h2>
+        <button onClick={openArchive} style={{ padding: '6px 14px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>View Archive</button>
+      </div>
       {filteredJobs.length === 0 ? (
         <p>No jobs found</p>
       ) : (
@@ -206,15 +261,27 @@ export default function Jobs({ onSelectJob }) {
                 <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
                   <button
                     onClick={() => onSelectJob && onSelectJob(j.id)}
-                    style={{ padding: '5px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}
+                    style={{ padding: '5px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}
                   >
                     View Details
                   </button>
                   <button
                     onClick={() => openEdit(j.id)}
-                    style={{ padding: '5px 10px', backgroundColor: '#ff9900', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+                    style={{ padding: '5px 10px', backgroundColor: '#ff9900', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}
                   >
                     Edit
+                  </button>
+                  <button
+                    onClick={() => handleArchive(j.id)}
+                    style={{ padding: '5px 10px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}
+                  >
+                    Archive
+                  </button>
+                  <button
+                    onClick={() => handleDelete(j.id)}
+                    style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -293,6 +360,43 @@ export default function Jobs({ onSelectJob }) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Archive Modal */}
+      {showArchive && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '24px', width: '75%', maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0 }}>Archived Jobs ({archivedJobs.length})</h2>
+              <button onClick={() => setShowArchive(false)} style={{ padding: '6px 14px', backgroundColor: '#ccc', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Close</button>
+            </div>
+            {archivedJobs.length === 0 ? <p>No archived jobs</p> : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f0f0f0' }}>
+                    <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job Name</th>
+                    <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Customer</th>
+                    <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
+                    <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {archivedJobs.map(j => (
+                    <tr key={j.id}>
+                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.name}</td>
+                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getCustomerName(j.customer_id)}</td>
+                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.status}</td>
+                      <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                        <button onClick={() => handleRestore(j.id)} style={{ padding: '4px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}>Restore</button>
+                        <button onClick={() => handleDeleteArchived(j.id)} style={{ padding: '4px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
     </div>

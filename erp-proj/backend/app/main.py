@@ -108,7 +108,11 @@ def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_
 
 @app.get('/customers', response_model=List[schemas.Customer])
 def list_customers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
-    return db.query(models.Customer).offset(skip).limit(limit).all()
+    return db.query(models.Customer).filter(models.Customer.is_archived != True).offset(skip).limit(limit).all()
+
+@app.get('/customers/archived', response_model=List[schemas.Customer])
+def list_archived_customers(db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    return db.query(models.Customer).filter(models.Customer.is_archived == True).all()
 
 @app.put('/customers/{customer_id}', response_model=schemas.Customer)
 def update_customer(customer_id: int, customer: schemas.CustomerCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
@@ -122,6 +126,34 @@ def update_customer(customer_id: int, customer: schemas.CustomerCreate, db: Sess
     db.refresh(db_customer)
     return db_customer
 
+@app.patch('/customers/{customer_id}/archive', response_model=schemas.Customer)
+def archive_customer(customer_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_customer = db.query(models.Customer).filter_by(id=customer_id).first()
+    if not db_customer:
+        raise HTTPException(status_code=404, detail='Customer not found')
+    db_customer.is_archived = True
+    db.commit()
+    db.refresh(db_customer)
+    return db_customer
+
+@app.patch('/customers/{customer_id}/restore', response_model=schemas.Customer)
+def restore_customer(customer_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_customer = db.query(models.Customer).filter_by(id=customer_id).first()
+    if not db_customer:
+        raise HTTPException(status_code=404, detail='Customer not found')
+    db_customer.is_archived = False
+    db.commit()
+    db.refresh(db_customer)
+    return db_customer
+
+@app.delete('/customers/{customer_id}', status_code=204)
+def delete_customer(customer_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_customer = db.query(models.Customer).filter_by(id=customer_id).first()
+    if not db_customer:
+        raise HTTPException(status_code=404, detail='Customer not found')
+    db.delete(db_customer)
+    db.commit()
+
 @app.get('/customers/{customer_id}', response_model=schemas.Customer)
 def get_customer(customer_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
     customer = db.query(models.Customer).filter_by(id=customer_id).first()
@@ -134,7 +166,7 @@ def get_customer_jobs(customer_id: int, db: Session = Depends(get_db), user: str
     customer = db.query(models.Customer).filter_by(id=customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail='Customer not found')
-    return db.query(models.Job).filter_by(customer_id=customer_id).all()
+    return db.query(models.Job).filter(models.Job.customer_id == customer_id, models.Job.is_archived != True).all()
 
 # Jobs (protected)
 @app.post('/jobs', response_model=schemas.Job)
@@ -147,7 +179,11 @@ def create_job(job: schemas.JobCreate, db: Session = Depends(get_db), user: str 
 
 @app.get('/jobs', response_model=List[schemas.Job])
 def list_jobs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
-    return db.query(models.Job).offset(skip).limit(limit).all()
+    return db.query(models.Job).filter(models.Job.is_archived != True).offset(skip).limit(limit).all()
+
+@app.get('/jobs/archived', response_model=List[schemas.Job])
+def list_archived_jobs(db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    return db.query(models.Job).filter(models.Job.is_archived == True).all()
 
 @app.get('/jobs/{job_id}', response_model=schemas.Job)
 def get_job(job_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
@@ -161,8 +197,35 @@ def get_job_parts(job_id: int, db: Session = Depends(get_db), user: str = Depend
     job = db.query(models.Job).filter_by(id=job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail='Job not found')
-    return db.query(models.Part).filter_by(job_id=job_id).all()
+    return db.query(models.Part).filter(models.Part.job_id == job_id, models.Part.is_archived != True).all()
 
+@app.patch('/jobs/{job_id}/archive', response_model=schemas.Job)
+def archive_job(job_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_job = db.query(models.Job).filter_by(id=job_id).first()
+    if not db_job:
+        raise HTTPException(status_code=404, detail='Job not found')
+    db_job.is_archived = True
+    db.commit()
+    db.refresh(db_job)
+    return db_job
+
+@app.patch('/jobs/{job_id}/restore', response_model=schemas.Job)
+def restore_job(job_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_job = db.query(models.Job).filter_by(id=job_id).first()
+    if not db_job:
+        raise HTTPException(status_code=404, detail='Job not found')
+    db_job.is_archived = False
+    db.commit()
+    db.refresh(db_job)
+    return db_job
+
+@app.delete('/jobs/{job_id}', status_code=204)
+def delete_job(job_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_job = db.query(models.Job).filter_by(id=job_id).first()
+    if not db_job:
+        raise HTTPException(status_code=404, detail='Job not found')
+    db.delete(db_job)
+    db.commit()
 
 @app.put('/jobs/{job_id}', response_model=schemas.Job)
 def update_job(job_id: int, job: schemas.JobCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
@@ -187,7 +250,11 @@ def create_part(part: schemas.PartCreate, db: Session = Depends(get_db), user: s
 
 @app.get('/parts', response_model=List[schemas.Part])
 def list_parts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
-    return db.query(models.Part).offset(skip).limit(limit).all()
+    return db.query(models.Part).filter(models.Part.is_archived != True).offset(skip).limit(limit).all()
+
+@app.get('/parts/archived', response_model=List[schemas.Part])
+def list_archived_parts(db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    return db.query(models.Part).filter(models.Part.is_archived == True).all()
 
 @app.get('/parts/{part_id}', response_model=schemas.Part)
 def get_part(part_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
@@ -196,6 +263,33 @@ def get_part(part_id: int, db: Session = Depends(get_db), user: str = Depends(ve
         raise HTTPException(status_code=404, detail='Part not found')
     return part
 
+@app.patch('/parts/{part_id}/archive', response_model=schemas.Part)
+def archive_part(part_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_part = db.query(models.Part).filter_by(id=part_id).first()
+    if not db_part:
+        raise HTTPException(status_code=404, detail='Part not found')
+    db_part.is_archived = True
+    db.commit()
+    db.refresh(db_part)
+    return db_part
+
+@app.patch('/parts/{part_id}/restore', response_model=schemas.Part)
+def restore_part(part_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_part = db.query(models.Part).filter_by(id=part_id).first()
+    if not db_part:
+        raise HTTPException(status_code=404, detail='Part not found')
+    db_part.is_archived = False
+    db.commit()
+    db.refresh(db_part)
+    return db_part
+
+@app.delete('/parts/{part_id}', status_code=204)
+def delete_part(part_id: int, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
+    db_part = db.query(models.Part).filter_by(id=part_id).first()
+    if not db_part:
+        raise HTTPException(status_code=404, detail='Part not found')
+    db.delete(db_part)
+    db.commit()
 
 @app.put('/parts/{part_id}', response_model=schemas.Part)
 def update_part(part_id: int, part: schemas.PartCreate, db: Session = Depends(get_db), user: str = Depends(verify_auth)):
