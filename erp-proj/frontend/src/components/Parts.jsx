@@ -402,14 +402,6 @@ export default function Parts({ onSelectPart }) {
   )
 }
 
-  const [parts, setParts] = useState([])
-  const [jobs, setJobs] = useState([])
-  const [materials, setMaterials] = useState([])
-  const [name, setName] = useState('')
-  const [jobId, setJobId] = useState('')
-  const [materialId, setMaterialId] = useState('')
-  const [materialType, setMaterialType] = useState('')
-  const [materialSize, setMaterialSize] = useState('')
   const [status, setStatus] = useState('pending')
   const [createBlueprintFiles, setCreateBlueprintFiles] = useState([])
   const [filter, setFilter] = useState('')
