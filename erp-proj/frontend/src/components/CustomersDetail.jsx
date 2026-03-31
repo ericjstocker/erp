@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react'
 import api from '../api'
 import { useTheme } from '../themeContext.jsx'
 
+const STATUS_COLORS = { running: '#28a745', hold: '#dc3545', ready: '#ffc107', 'needs-work': '#fd7e14', complete: '#0066cc' }
+const STATUS_LABELS = { running: 'Running', hold: 'Hold', ready: 'Ready/Next', 'needs-work': 'Needs Work', complete: 'Complete' }
+const statusBadgeStyle = (s) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: '4px', backgroundColor: STATUS_COLORS[s] || '#aaa', color: '#000', fontWeight: 'bold', fontSize: '12px' })
+const statusLabel = (s) => STATUS_LABELS[s] || s || 'N/A'
+
 export default function CustomersDetail({ customerId, onBack, onSelectJob, onSelectPart }) {
   const { accentColor, currentTheme } = useTheme()
   const [customer, setCustomer] = useState(null)
@@ -225,15 +230,7 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{parts.filter(p => p.job_id === job.id).length}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{job.due_date ? new Date(job.due_date).toLocaleDateString() : 'N/A'}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
-                  <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '3px',
-                    backgroundColor: job.status === 'finished' ? '#90EE90' : job.status === 'in-progress' ? '#FFD700' : '#FFC0CB',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    {job.status}
-                  </span>
+                  <span style={statusBadgeStyle(job.status)}>{statusLabel(job.status)}</span>
                 </td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{job.created_at ? new Date(job.created_at).toLocaleDateString() : 'N/A'}</td>
               </tr>
@@ -270,15 +267,7 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{getMaterialShape(part.material_id)}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{part.quantity != null ? part.quantity : 'N/A'}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
-                  <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '3px',
-                    backgroundColor: part.status === 'finished' ? '#90EE90' : part.status === 'in-progress' ? '#FFD700' : '#FFC0CB',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    {part.status}
-                  </span>
+                  <span style={statusBadgeStyle(part.status)}>{statusLabel(part.status)}</span>
                 </td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   {jobs.find(j => j.id === part.job_id) ? (

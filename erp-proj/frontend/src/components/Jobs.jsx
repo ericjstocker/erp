@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react'
 import api from '../api'
 import { useTheme } from '../themeContext.jsx'
 
+const STATUS_COLORS = { running: '#28a745', hold: '#dc3545', ready: '#ffc107', 'needs-work': '#fd7e14', complete: '#0066cc' }
+const STATUS_LABELS = { running: 'Running', hold: 'Hold', ready: 'Ready/Next', 'needs-work': 'Needs Work', complete: 'Complete' }
+const statusBadgeStyle = (s) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: '4px', backgroundColor: STATUS_COLORS[s] || '#aaa', color: '#000', fontWeight: 'bold', fontSize: '12px' })
+const statusLabel = (s) => STATUS_LABELS[s] || s || 'N/A'
+
 export default function Jobs({ onSelectJob }) {
   const { accentColor, currentTheme } = useTheme()
   const [jobs, setJobs] = useState([])
@@ -19,6 +24,7 @@ export default function Jobs({ onSelectJob }) {
   const [editDocs, setEditDocs] = useState([])
   const [showArchive, setShowArchive] = useState(false)
   const [archivedJobs, setArchivedJobs] = useState([])
+  const [createStatus, setCreateStatus] = useState('ready')
 
   useEffect(() => {
     loadData()
@@ -47,7 +53,7 @@ export default function Jobs({ onSelectJob }) {
         description: description || null,
         po_number: poNumber || null,
         customer_id: customerId ? parseInt(customerId) : null,
-        status: 'queued'
+        status: createStatus
       })
       if (createDocFiles.length > 0) {
         for (const file of createDocFiles) {
@@ -60,6 +66,7 @@ export default function Jobs({ onSelectJob }) {
       setCustomerId('')
       setSelectedParts([])
       setCreateDocFiles([])
+      setCreateStatus('ready')
       loadData()
     } catch (err) {
       alert(`Error creating job: ${err}`)
@@ -216,6 +223,16 @@ export default function Jobs({ onSelectJob }) {
             </select>
           </div>
           <div style={{ marginBottom: '10px' }}>
+            <label>Status: </label>
+            <select value={createStatus} onChange={(e) => setCreateStatus(e.target.value)} style={inputStyle}>
+              <option value="running">Running</option>
+              <option value="hold">Hold</option>
+              <option value="ready">Ready/Next</option>
+              <option value="needs-work">Needs Work</option>
+              <option value="complete">Complete</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: '10px' }}>
             <label>PO Documents: </label>
             <input
               type="file"
@@ -268,7 +285,7 @@ export default function Jobs({ onSelectJob }) {
                 <td style={tdStyle}>{parts.filter(p => p.job_id === j.id).length}</td>
                 <td style={tdStyle}>{getCustomerName(j.customer_id)}</td>
                 <td style={tdStyle}>{j.due_date ? new Date(j.due_date).toLocaleDateString() : 'N/A'}</td>
-                <td style={tdStyle}>{j.status}</td>
+                <td style={tdStyle}><span style={statusBadgeStyle(j.status)}>{statusLabel(j.status)}</span></td>
                 <td style={tdStyle}>{j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td>
                 <td style={{ ...tdStyle, textAlign: 'center' }}>
                   <button
@@ -328,9 +345,11 @@ export default function Jobs({ onSelectJob }) {
               <div style={{ marginBottom: '10px' }}>
                 <label>Status: </label>
                 <select value={j.status || ''} onChange={(e) => { j.status = e.target.value; setJobs([...jobs]) }} style={inputStyle}>
-                  <option value="queued">Queued</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="finished">Finished</option>
+                  <option value="running">Running</option>
+                  <option value="hold">Hold</option>
+                  <option value="ready">Ready/Next</option>
+                  <option value="needs-work">Needs Work</option>
+                  <option value="complete">Complete</option>
                 </select>
               </div>
               <div style={{ marginBottom: '10px' }}>
@@ -398,7 +417,7 @@ export default function Jobs({ onSelectJob }) {
                     <tr key={j.id}>
                       <td style={tdStyle}>{j.name}</td>
                       <td style={tdStyle}>{getCustomerName(j.customer_id)}</td>
-                      <td style={tdStyle}>{j.status}</td>
+                      <td style={tdStyle}><span style={statusBadgeStyle(j.status)}>{statusLabel(j.status)}</span></td>
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <button onClick={() => handleRestore(j.id)} style={{ padding: '4px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}>Restore</button>
                         <button onClick={() => handleDeleteArchived(j.id)} style={{ padding: '4px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}>Delete</button>

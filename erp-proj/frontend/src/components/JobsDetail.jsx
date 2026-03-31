@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react'
 import api from '../api'
 import { useTheme } from '../themeContext.jsx'
 
+const STATUS_COLORS = { running: '#28a745', hold: '#dc3545', ready: '#ffc107', 'needs-work': '#fd7e14', complete: '#0066cc' }
+const STATUS_LABELS = { running: 'Running', hold: 'Hold', ready: 'Ready/Next', 'needs-work': 'Needs Work', complete: 'Complete' }
+const statusBadgeStyle = (s) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: '4px', backgroundColor: STATUS_COLORS[s] || '#aaa', color: '#000', fontWeight: 'bold', fontSize: '12px' })
+const statusLabel = (s) => STATUS_LABELS[s] || s || 'N/A'
+
 export default function JobsDetail({ jobId, onBack, onSelectPart }) {
   const { accentColor, currentTheme } = useTheme()
   const thStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }
@@ -172,9 +177,11 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
           <div style={{ marginBottom: '14px' }}>
             <label>Status: </label>
             <select value={editedJob.status || ''} onChange={(e) => setEditedJob({ ...editedJob, status: e.target.value })} style={inputStyle}>
-              <option value="queued">Queued</option>
-              <option value="in-progress">In Progress</option>
-              <option value="finished">Finished</option>
+              <option value="running">Running</option>
+              <option value="hold">Hold</option>
+              <option value="ready">Ready/Next</option>
+              <option value="needs-work">Needs Work</option>
+              <option value="complete">Complete</option>
             </select>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -188,7 +195,7 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
           <p><strong>Customer:</strong> {getCustomerName(job.customer_id)}</p>
           <p><strong>Due Date:</strong> {job.due_date || 'N/A'}</p>
           <p><strong>Received Date:</strong> {job.received_date || 'N/A'}</p>
-          <p><strong>Status:</strong> {job.status}</p>
+          <p><strong>Status:</strong> <span style={statusBadgeStyle(job.status)}>{statusLabel(job.status)}</span></p>
           <p><strong>Created:</strong> {job.created_at ? new Date(job.created_at).toLocaleDateString() : 'N/A'}</p>
         </>
       )}
@@ -228,9 +235,11 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
                   </td>
                   <td style={tdStyle}>
                     <select value={editedPart.status || ''} onChange={(e) => setEditedPart({ ...editedPart, status: e.target.value })} style={inputStyle}>
-                      <option value="queued">Queued</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="completed">Completed</option>
+                      <option value="running">Running</option>
+                      <option value="hold">Hold</option>
+                      <option value="ready">Ready/Next</option>
+                      <option value="needs-work">Needs Work</option>
+                      <option value="complete">Complete</option>
                     </select>
                   </td>
                   <td style={tdStyle}>{new Date(part.created_at).toLocaleDateString()}</td>
@@ -250,7 +259,7 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
                   <td style={tdStyle}>{getMaterialName(part.material_id)}</td>
                   <td style={tdStyle}>{getMaterialShape(part.material_id)}</td>
                   <td style={tdStyle}>{part.quantity != null ? part.quantity : 'N/A'}</td>
-                  <td style={tdStyle}>{part.status}</td>
+                  <td style={tdStyle}><span style={statusBadgeStyle(part.status)}>{statusLabel(part.status)}</span></td>
                   <td style={tdStyle}>{new Date(part.created_at).toLocaleDateString()}</td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     <button

@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react'
 import api from '../api'
 import { useTheme } from '../themeContext.jsx'
 
+const STATUS_COLORS = { running: '#28a745', hold: '#dc3545', ready: '#ffc107', 'needs-work': '#fd7e14', complete: '#0066cc' }
+const STATUS_LABELS = { running: 'Running', hold: 'Hold', ready: 'Ready/Next', 'needs-work': 'Needs Work', complete: 'Complete' }
+const statusBadgeStyle = (s) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: '4px', backgroundColor: STATUS_COLORS[s] || '#aaa', color: '#000', fontWeight: 'bold', fontSize: '12px' })
+const statusLabel = (s) => STATUS_LABELS[s] || s || 'N/A'
+
 export default function Parts({ onSelectPart }) {
   const { accentColor, currentTheme } = useTheme()
   const [parts, setParts] = useState([])
@@ -10,7 +15,7 @@ export default function Parts({ onSelectPart }) {
   const [name, setName] = useState('')
   const [jobId, setJobId] = useState('')
   const [materialId, setMaterialId] = useState('')
-  const [status, setStatus] = useState('pending')
+  const [status, setStatus] = useState('ready')
   const [createBlueprintFiles, setCreateBlueprintFiles] = useState([])
   const [filter, setFilter] = useState('')
   const [editing, setEditing] = useState(null)
@@ -74,7 +79,7 @@ export default function Parts({ onSelectPart }) {
       for (const file of createBlueprintFiles) {
         try { await api.uploadBlueprint(created.id, file) } catch (err) { alert(`Blueprint upload failed for ${file.name}: ${err}`) }
       }
-      setName(''); setJobId(''); setMaterialId(''); setStatus('pending')
+      setName(''); setJobId(''); setMaterialId(''); setStatus('ready')
       setCreateBlueprintFiles([]); setNewMaterialForCreate(false)
       resetCreateMatData(); setCreateMatPOFile(null)
       loadData()
@@ -236,9 +241,11 @@ export default function Parts({ onSelectPart }) {
           <div style={{ marginBottom: '10px' }}>
             <label>Status: </label>
             <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ padding: '6px', border: '1px solid ' + currentTheme.inputBorder, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text }}>
-              <option value="pending">Pending</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
+              <option value="running">Running</option>
+              <option value="hold">Hold</option>
+              <option value="ready">Ready/Next</option>
+              <option value="needs-work">Needs Work</option>
+              <option value="complete">Complete</option>
             </select>
           </div>
           <div style={{ marginBottom: '10px' }}>
@@ -296,7 +303,7 @@ export default function Parts({ onSelectPart }) {
                   <td style={td}>{p.quantity != null ? p.quantity : 'N/A'}</td>
                   <td style={td}>{getJobName(p.job_id)}</td>
                   <td style={td}>{getCustomerForJob(p.job_id)}</td>
-                  <td style={td}>{p.status || 'N/A'}</td>
+                  <td style={td}><span style={statusBadgeStyle(p.status)}>{statusLabel(p.status)}</span></td>
                   <td style={td}>{p.created_at ? new Date(p.created_at).toLocaleDateString() : 'N/A'}</td>
                   <td style={{ ...td, textAlign: 'center' }}>
                     <button onClick={() => onSelectPart && onSelectPart(p.id)} style={btn('#0066cc')}>View Details</button>
@@ -334,7 +341,7 @@ export default function Parts({ onSelectPart }) {
                     <tr key={p.id}>
                       <td style={td}>{p.name}</td>
                       <td style={td}>{getMaterialName(p.material_id)}</td>
-                      <td style={td}>{p.status}</td>
+                      <td style={td}><span style={statusBadgeStyle(p.status)}>{statusLabel(p.status)}</span></td>
                       <td style={{ ...td, textAlign: 'center' }}>
                         <button onClick={() => handleRestore(p.id)} style={btn('#28a745')}>Restore</button>
                         <button onClick={() => handleDeleteArchived(p.id)} style={btn('#dc3545', '0')}>Delete</button>
@@ -381,10 +388,12 @@ export default function Parts({ onSelectPart }) {
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Status: </label>
-                <select value={p.status || 'pending'} onChange={(e) => { p.status = e.target.value; setParts([...parts]) }} style={{ padding: '6px', border: '1px solid ' + currentTheme.inputBorder, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text }}>
-                  <option value="pending">Pending</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
+                <select value={p.status || 'ready'} onChange={(e) => { p.status = e.target.value; setParts([...parts]) }} style={{ padding: '6px', border: '1px solid ' + currentTheme.inputBorder, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text }}>
+                  <option value="running">Running</option>
+                  <option value="hold">Hold</option>
+                  <option value="ready">Ready/Next</option>
+                  <option value="needs-work">Needs Work</option>
+                  <option value="complete">Complete</option>
                 </select>
               </div>
               <div style={{ marginBottom: '10px' }}>

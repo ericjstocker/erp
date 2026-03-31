@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react'
 import api from '../api'
 import { useTheme } from '../themeContext.jsx'
 
+const STATUS_COLORS = { running: '#28a745', hold: '#dc3545', ready: '#ffc107', 'needs-work': '#fd7e14', complete: '#0066cc' }
+const STATUS_LABELS = { running: 'Running', hold: 'Hold', ready: 'Ready/Next', 'needs-work': 'Needs Work', complete: 'Complete' }
+const statusBadgeStyle = (s) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: '4px', backgroundColor: STATUS_COLORS[s] || '#aaa', color: '#000', fontWeight: 'bold', fontSize: '12px' })
+const statusLabel = (s) => STATUS_LABELS[s] || s || 'N/A'
+
 export default function Home({ onSelectJob }) {
   const { accentColor, currentTheme } = useTheme()
   const [activeJobs, setActiveJobs] = useState([])
@@ -32,7 +37,7 @@ export default function Home({ onSelectJob }) {
     poNumber: ''
   })
   
-  const [parts, setParts] = useState([{ name: '', quantity: 1, status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
+  const [parts, setParts] = useState([{ name: '', quantity: 1, status: 'ready', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
   const [jobPOFiles, setJobPOFiles] = useState([])
   const [message, setMessage] = useState('')
 
@@ -49,7 +54,12 @@ export default function Home({ onSelectJob }) {
         api.listParts()
       ])
       setExistingJobs(jobsRes)
-      setActiveJobs(jobsRes.filter(j => j.status !== 'finished'))
+      const statusOrder = { running: 0, ready: 1, 'needs-work': 2, hold: 3 }
+      setActiveJobs(
+        jobsRes
+          .filter(j => !['complete', 'finished'].includes(j.status))
+          .sort((a, b) => (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4))
+      )
       setExistingCustomers(customersRes)
       setMaterials(materialsRes)
       setExistingParts(partsRes)
@@ -58,7 +68,7 @@ export default function Home({ onSelectJob }) {
     }
   }
 
-  const emptyPart = () => ({ name: '', quantity: 1, status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null })
+  const emptyPart = () => ({ name: '', quantity: 1, status: 'ready', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null })
 
   const handlePartChange = (index, field, value) => {
     const newParts = [...parts]
@@ -209,7 +219,7 @@ export default function Home({ onSelectJob }) {
         setNewJob(false)
         setCustomerData({ id: '', name: '', point_of_contact: '', phone_number: '', email: '', notes: '' })
         setJobData({ id: '', name: '', description: '', dueDate: '', receivedDate: '', poNumber: '' })
-        setParts([{ name: '', quantity: 1, status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
+        setParts([{ name: '', quantity: 1, status: 'ready', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
         setJobPOFiles([])
         loadData()
       }, 1500)
@@ -564,9 +574,11 @@ export default function Home({ onSelectJob }) {
                   onChange={(e) => handlePartChange(index, 'status', e.target.value)}
                   style={{...selectStyle, width: '100%'}}
                 >
-                  <option value="pending">Pending</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="completed">Completed</option>
+                  <option value="running">Running</option>
+                  <option value="hold">Hold</option>
+                  <option value="ready">Ready/Next</option>
+                  <option value="needs-work">Needs Work</option>
+                  <option value="complete">Complete</option>
                 </select>
               </div>
               <label style={{ display: 'block', marginTop: '8px' }}>
@@ -607,17 +619,28 @@ export default function Home({ onSelectJob }) {
               </tr>
             </thead>
             <tbody>
-              {activeJobs.map(job => (
-                <tr key={job.id}>
-                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.name}</td>
-                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{existingCustomers.find(c => c.id === job.customer_id)?.name || 'N/A'}</td>
-                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{existingParts.filter(p => p.job_id === job.id).length}</td>
-                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.status}</td>
-                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>
-                    <button onClick={() => onSelectJob(job.id)}>View</button>
-                  </td>
-                </tr>
-              ))}
+              {activeJobs.flatMap(job => {
+                const jobParts = existingParts.filter(p => p.job_id === job.id && p.status !== 'complete')
+                const cs = { border: `1px solid ${accentColor}`, padding: '8px', color: currentTheme.text }
+                return [
+                  <tr key={`job-${job.id}`} style={{ backgroundColor: currentTheme.bg }}>
+                    <td style={cs}><strong>{job.name}</strong></td>
+                    <td style={cs}>{existingCustomers.find(c => c.id === job.customer_id)?.name || 'N/A'}</td>
+                    <td style={cs}>{existingParts.filter(p => p.job_id === job.id).length}</td>
+                    <td style={cs}><span style={statusBadgeStyle(job.status)}>{statusLabel(job.status)}</span></td>
+                    <td style={cs}><button onClick={() => onSelectJob(job.id)} style={{ padding: '4px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}>View</button></td>
+                  </tr>,
+                  ...jobParts.map(part => (
+                    <tr key={`part-${part.id}`} style={{ backgroundColor: currentTheme.hover }}>
+                      <td style={{ ...cs, paddingLeft: '28px', fontSize: '13px' }}>↳ {part.name}</td>
+                      <td style={cs}></td>
+                      <td style={cs}></td>
+                      <td style={cs}><span style={statusBadgeStyle(part.status)}>{statusLabel(part.status)}</span></td>
+                      <td style={cs}></td>
+                    </tr>
+                  ))
+                ]
+              })}
             </tbody>
           </table>
         )}
