@@ -595,7 +595,7 @@ export default function Home({ onSelectJob }) {
                 <tr key={job.id}>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.id}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.name}</td>
-                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.customer_id}</td>
+                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{existingCustomers.find(c => c.id === job.customer_id)?.name || 'N/A'}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.status}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>
                     <button onClick={() => onSelectJob(job.id)}>View</button>
