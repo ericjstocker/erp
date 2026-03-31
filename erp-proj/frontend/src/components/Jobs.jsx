@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
+import { useTheme } from '../themeContext.jsx'
 
 export default function Jobs({ onSelectJob }) {
+  const { accentColor, currentTheme } = useTheme()
   const [jobs, setJobs] = useState([])
   const [customers, setCustomers] = useState([])
   const [parts, setParts] = useState([])
@@ -157,12 +159,17 @@ export default function Jobs({ onSelectJob }) {
     return customer ? customer.name : 'N/A'
   }
 
+  const boxStyle = { marginBottom: '30px', padding: '15px', border: '2px solid ' + accentColor, borderRadius: '5px', backgroundColor: currentTheme.bg }
+  const inputStyle = { padding: '6px', border: '1px solid ' + currentTheme.inputBorder, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text, fontSize: '14px', fontFamily: 'inherit' }
+  const thStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }
+  const tdStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }
+
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', color: currentTheme.text, backgroundColor: currentTheme.bg, minHeight: '100%' }}>
       <h1>Jobs</h1>
 
       {/* Add Job Form */}
-      <div style={{ marginBottom: '30px', padding: '15px', border: '2px solid #0066cc', borderRadius: '5px' }}>
+      <div style={boxStyle}>
         <h2>Create New Job</h2>
         <form onSubmit={submit}>
           <div style={{ marginBottom: '10px' }}>
@@ -173,6 +180,7 @@ export default function Jobs({ onSelectJob }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Job name"
               required
+              style={inputStyle}
             />
           </div>
           <div style={{ marginBottom: '10px' }}>
@@ -181,7 +189,7 @@ export default function Jobs({ onSelectJob }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Job description"
-              style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '14px', minHeight: '60px', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ ...inputStyle, width: '100%', minHeight: '60px', resize: 'vertical', boxSizing: 'border-box' }}
             />
           </div>
           <div style={{ marginBottom: '10px' }}>
@@ -191,6 +199,7 @@ export default function Jobs({ onSelectJob }) {
               value={poNumber}
               onChange={(e) => setPoNumber(e.target.value)}
               placeholder="Purchase Order number"
+              style={inputStyle}
             />
           </div>
           <div style={{ marginBottom: '10px' }}>
@@ -198,6 +207,7 @@ export default function Jobs({ onSelectJob }) {
             <select
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
+              style={inputStyle}
             >
               <option value="">Select Customer (optional)</option>
               {customers.map(c => (
@@ -212,7 +222,7 @@ export default function Jobs({ onSelectJob }) {
               multiple
               onChange={(e) => setCreateDocFiles(Array.from(e.target.files))}
             />
-            {createDocFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: '#555' }}>{createDocFiles.length} file(s) selected</span>}
+            {createDocFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: currentTheme.text }}>{createDocFiles.length} file(s) selected</span>}
           </div>
           <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
             Create Job
@@ -227,7 +237,7 @@ export default function Jobs({ onSelectJob }) {
           placeholder="Search jobs..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+          style={{ ...inputStyle, width: '100%', padding: '8px' }}
         />
       </div>
 
@@ -241,24 +251,24 @@ export default function Jobs({ onSelectJob }) {
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f0f0f0' }}>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job Name</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Customer</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Due Date</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Created</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+            <tr>
+              <th style={thStyle}>Job Name</th>
+              <th style={thStyle}>Customer</th>
+              <th style={thStyle}>Due Date</th>
+              <th style={thStyle}>Status</th>
+              <th style={thStyle}>Created</th>
+              <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredJobs.map(j => (
-              <tr key={j.id} style={{ cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.name}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getCustomerName(j.customer_id)}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.due_date ? new Date(j.due_date).toLocaleDateString() : 'N/A'}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.status}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+              <tr key={j.id} style={{ cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = currentTheme.hover} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = currentTheme.bg}>
+                <td style={tdStyle}>{j.name}</td>
+                <td style={tdStyle}>{getCustomerName(j.customer_id)}</td>
+                <td style={tdStyle}>{j.due_date ? new Date(j.due_date).toLocaleDateString() : 'N/A'}</td>
+                <td style={tdStyle}>{j.status}</td>
+                <td style={tdStyle}>{j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
                   <button
                     onClick={() => onSelectJob && onSelectJob(j.id)}
                     style={{ padding: '5px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}
@@ -292,17 +302,17 @@ export default function Jobs({ onSelectJob }) {
 
       {/* Edit Modal */}
       {editing && (
-        <div style={{ marginTop: '30px', padding: '20px', border: '2px solid #ff9900', borderRadius: '5px', backgroundColor: '#fffacd' }}>
+        <div style={{ marginTop: '30px', padding: '20px', border: '2px solid #ff9900', borderRadius: '5px', backgroundColor: currentTheme.hover, color: currentTheme.text }}>
           <h2>Edit Job</h2>
           {jobs.map(j => editing === j.id && (
             <div key={j.id}>
               <div style={{ marginBottom: '10px' }}>
                 <label>Job Name: </label>
-                <input value={j.name} onChange={(e) => { j.name = e.target.value; setJobs([...jobs]) }} />
+                <input value={j.name} onChange={(e) => { j.name = e.target.value; setJobs([...jobs]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Customer: </label>
-                <select value={j.customer_id || ''} onChange={(e) => { j.customer_id = e.target.value ? parseInt(e.target.value) : null; setJobs([...jobs]) }}>
+                <select value={j.customer_id || ''} onChange={(e) => { j.customer_id = e.target.value ? parseInt(e.target.value) : null; setJobs([...jobs]) }} style={inputStyle}>
                   <option value="">Select Customer</option>
                   {customers.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -311,11 +321,11 @@ export default function Jobs({ onSelectJob }) {
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Due Date: </label>
-                <input type="date" value={j.due_date || ''} onChange={(e) => { j.due_date = e.target.value || null; setJobs([...jobs]) }} />
+                <input type="date" value={j.due_date || ''} onChange={(e) => { j.due_date = e.target.value || null; setJobs([...jobs]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Status: </label>
-                <select value={j.status || ''} onChange={(e) => { j.status = e.target.value; setJobs([...jobs]) }}>
+                <select value={j.status || ''} onChange={(e) => { j.status = e.target.value; setJobs([...jobs]) }} style={inputStyle}>
                   <option value="queued">Queued</option>
                   <option value="in-progress">In Progress</option>
                   <option value="finished">Finished</option>
@@ -324,25 +334,25 @@ export default function Jobs({ onSelectJob }) {
               <div style={{ marginBottom: '10px' }}>
                 <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Upload PO Documents:</label>
                 <input type="file" multiple onChange={(e) => setEditDocFiles(Array.from(e.target.files))} />
-                {editDocFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: '#555' }}>{editDocFiles.length} file(s) selected</span>}
+                {editDocFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: currentTheme.text }}>{editDocFiles.length} file(s) selected</span>}
               </div>
               {editDocs.length > 0 && (
                 <div style={{ marginBottom: '10px' }}>
                   <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Existing Documents ({editDocs.length}):</label>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr style={{ backgroundColor: '#f0f0f0' }}>
-                        <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Filename</th>
-                        <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Uploaded</th>
-                        <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Actions</th>
-                      </tr>
+                      <tr>
+                      <th style={thStyle}>Filename</th>
+                      <th style={thStyle}>Uploaded</th>
+                      <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
+                    </tr>
                     </thead>
                     <tbody>
                       {editDocs.map(doc => (
                         <tr key={doc.id}>
-                          <td style={{ border: '1px solid #ddd', padding: '6px' }}>{doc.filename}</td>
-                          <td style={{ border: '1px solid #ddd', padding: '6px' }}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
-                          <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>
+                          <td style={tdStyle}>{doc.filename}</td>
+                          <td style={tdStyle}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                          <td style={{ ...tdStyle, textAlign: 'center' }}>
                             <button onClick={() => downloadEditDoc(doc)} style={{ padding: '3px 8px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}>Download</button>
                             <button onClick={() => deleteEditDoc(doc.id)} style={{ padding: '3px 8px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Delete</button>
                           </td>
@@ -366,7 +376,7 @@ export default function Jobs({ onSelectJob }) {
       {/* Archive Modal */}
       {showArchive && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '24px', width: '75%', maxHeight: '80vh', overflowY: 'auto' }}>
+          <div style={{ backgroundColor: currentTheme.bg, color: currentTheme.text, borderRadius: '8px', padding: '24px', width: '75%', maxHeight: '80vh', overflowY: 'auto', border: '1px solid ' + currentTheme.border }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ margin: 0 }}>Archived Jobs ({archivedJobs.length})</h2>
               <button onClick={() => setShowArchive(false)} style={{ padding: '6px 14px', backgroundColor: '#ccc', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Close</button>
@@ -374,20 +384,20 @@ export default function Jobs({ onSelectJob }) {
             {archivedJobs.length === 0 ? <p>No archived jobs</p> : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#f0f0f0' }}>
-                    <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job Name</th>
-                    <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Customer</th>
-                    <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
-                    <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+                  <tr>
+                    <th style={thStyle}>Job Name</th>
+                    <th style={thStyle}>Customer</th>
+                    <th style={thStyle}>Status</th>
+                    <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {archivedJobs.map(j => (
                     <tr key={j.id}>
-                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.name}</td>
-                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getCustomerName(j.customer_id)}</td>
-                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{j.status}</td>
-                      <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                      <td style={tdStyle}>{j.name}</td>
+                      <td style={tdStyle}>{getCustomerName(j.customer_id)}</td>
+                      <td style={tdStyle}>{j.status}</td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <button onClick={() => handleRestore(j.id)} style={{ padding: '4px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}>Restore</button>
                         <button onClick={() => handleDeleteArchived(j.id)} style={{ padding: '4px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}>Delete</button>
                       </td>

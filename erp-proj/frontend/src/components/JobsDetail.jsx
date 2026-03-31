@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
+import { useTheme } from '../themeContext.jsx'
 
 export default function JobsDetail({ jobId, onBack, onSelectPart }) {
+  const { accentColor, currentTheme } = useTheme()
+  const thStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }
+  const tdStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }
   const [job, setJob] = useState(null)
   const [parts, setParts] = useState([])
   const [customers, setCustomers] = useState([])
@@ -86,8 +90,8 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
   if (!job) return <div>Job not found</div>
 
   return (
-    <div style={{ padding: '20px' }}>
-      <button onClick={onBack} style={{ marginBottom: '20px', padding: '8px 16px' }}>← Back to Jobs</button>
+    <div style={{ padding: '20px', backgroundColor: currentTheme.bg, color: currentTheme.text, minHeight: '100%' }}>
+      <button onClick={onBack} style={{ marginBottom: '20px', padding: '8px 16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>← Back to Jobs</button>
       
       <h2>{job.name}</h2>
       <p><strong>Description:</strong> {job.description || 'N/A'}</p>
@@ -103,27 +107,27 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f0f0f0' }}>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Part Name</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Name</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Shape</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Created</th>
+            <tr>
+              <th style={thStyle}>Part Name</th>
+              <th style={thStyle}>Material Name</th>
+              <th style={thStyle}>Shape</th>
+              <th style={thStyle}>Status</th>
+              <th style={thStyle}>Created</th>
             </tr>
           </thead>
           <tbody>
             {parts.map(part => (
               <tr key={part.id}>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <td style={tdStyle}>
                   <span
                     onClick={() => onSelectPart && onSelectPart(part.id)}
-                    style={{ color: '#0066cc', cursor: onSelectPart ? 'pointer' : 'default', textDecoration: onSelectPart ? 'underline' : 'none' }}
+                    style={{ color: accentColor, cursor: onSelectPart ? 'pointer' : 'default', textDecoration: onSelectPart ? 'underline' : 'none' }}
                   >{part.name}</span>
                 </td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getMaterialName(part.material_id)}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{getMaterialShape(part.material_id)}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.status}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{new Date(part.created_at).toLocaleDateString()}</td>
+                <td style={tdStyle}>{getMaterialName(part.material_id)}</td>
+                <td style={tdStyle}>{getMaterialShape(part.material_id)}</td>
+                <td style={tdStyle}>{part.status}</td>
+                <td style={tdStyle}>{new Date(part.created_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
@@ -132,25 +136,25 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
 
       <h3 style={{ marginTop: '30px' }}>PO Documents ({documents.length})</h3>
       {documents.length === 0 ? (
-        <p style={{ color: '#666' }}>No documents uploaded for this job</p>
+        <p style={{ color: currentTheme.text }}>No documents uploaded for this job</p>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f0f0f0' }}>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Filename</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Uploaded</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+            <tr>
+              <th style={thStyle}>Filename</th>
+              <th style={thStyle}>Uploaded</th>
+              <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {documents.map(doc => (
               <tr key={doc.id}>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doc.filename}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                <td style={tdStyle}>{doc.filename}</td>
+                <td style={tdStyle}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
                   <button
                     onClick={() => handleDownload(doc)}
-                    style={{ padding: '4px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}
+                    style={{ padding: '4px 10px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}
                   >Download</button>
                   <button
                     onClick={() => handleDelete(doc.id)}
@@ -163,7 +167,7 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
         </table>
       )}
 
-      <div style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px', display: 'inline-block' }}>
+      <div style={{ padding: '15px', border: '1px solid ' + currentTheme.border, borderRadius: '5px', display: 'inline-block', backgroundColor: currentTheme.hover }}>
         <strong>Upload Document(s):</strong>
         <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <input

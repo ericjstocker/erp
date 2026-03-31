@@ -71,13 +71,13 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
   if (!customer) return <div style={{ padding: '20px' }}>Customer not found</div>
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', backgroundColor: currentTheme.bg, color: currentTheme.text, minHeight: '100%' }}>
       <button 
         onClick={onBack} 
         style={{ 
           marginBottom: '20px', 
           padding: '8px 16px',
-          backgroundColor: '#0066cc',
+          backgroundColor: accentColor,
           color: 'white',
           border: 'none',
           borderRadius: '3px',
@@ -194,30 +194,30 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
 
       <h3>Associated Jobs ({jobs.length})</h3>
       {jobs.length === 0 ? (
-        <p style={{ color: '#666' }}>No jobs found for this customer</p>
+        <p style={{ color: currentTheme.text }}>No jobs found for this customer</p>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f0f0f0' }}>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job ID</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job Name</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Due Date</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Created</th>
+            <tr>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Job ID</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Job Name</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Due Date</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Status</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Created</th>
             </tr>
           </thead>
           <tbody>
             {jobs.map(job => (
               <tr key={job.id}>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{job.id}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{job.id}</td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   <span
                     onClick={() => onSelectJob && onSelectJob(job.id)}
                     style={{ color: accentColor, cursor: 'pointer', textDecoration: 'underline' }}
                   >{job.name}</span>
                 </td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{job.due_date ? new Date(job.due_date).toLocaleDateString() : 'N/A'}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{job.due_date ? new Date(job.due_date).toLocaleDateString() : 'N/A'}</td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   <span style={{ 
                     padding: '4px 8px', 
                     borderRadius: '3px',
@@ -228,7 +228,7 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
                     {job.status}
                   </span>
                 </td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{job.created_at ? new Date(job.created_at).toLocaleDateString() : 'N/A'}</td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{job.created_at ? new Date(job.created_at).toLocaleDateString() : 'N/A'}</td>
               </tr>
             ))}
           </tbody>
@@ -237,30 +237,30 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
 
       <h3>Associated Parts ({parts.length})</h3>
       {parts.length === 0 ? (
-        <p style={{ color: '#666' }}>No parts found</p>
+        <p style={{ color: currentTheme.text }}>No parts found</p>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f0f0f0' }}>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Part ID</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Part Name</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Material Type</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Status</th>
-              <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Job</th>
+            <tr>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Part ID</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Part Name</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Material Type</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Status</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Job</th>
             </tr>
           </thead>
           <tbody>
             {parts.map(part => (
               <tr key={part.id}>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.id}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{part.id}</td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   <span
                     onClick={() => onSelectPart && onSelectPart(part.id)}
                     style={{ color: accentColor, cursor: 'pointer', textDecoration: 'underline' }}
                   >{part.name}</span>
                 </td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{part.material_type || 'N/A'}</td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{part.material_type || 'N/A'}</td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   <span style={{ 
                     padding: '4px 8px', 
                     borderRadius: '3px',
@@ -271,7 +271,7 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
                     {part.status}
                   </span>
                 </td>
-                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   {jobs.find(j => j.id === part.job_id) ? (
                     <span
                       onClick={() => onSelectJob && onSelectJob(part.job_id)}

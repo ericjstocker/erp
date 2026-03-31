@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
+import { useTheme } from '../themeContext.jsx'
 
 export default function MaterialDetail({ materialId, onBack }) {
+  const { accentColor, currentTheme } = useTheme()
+  const thStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }
+  const tdStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }
   const [material, setMaterial] = useState(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -128,7 +132,7 @@ export default function MaterialDetail({ materialId, onBack }) {
           type={type}
           value={edited[key] || ''}
           onChange={(e) => setEdited({ ...edited, [key]: e.target.value })}
-          style={{ padding: '6px', border: '1px solid #ccc', borderRadius: '3px' }}
+          style={{ padding: '6px', border: '1px solid ' + currentTheme.inputBorder, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text }}
         />
       ) : (
         <span>{material[key] || 'N/A'}</span>
@@ -137,10 +141,10 @@ export default function MaterialDetail({ materialId, onBack }) {
   )
 
   return (
-    <div style={{ padding: '20px' }}>
-      <button onClick={onBack} style={{ marginBottom: '20px', padding: '8px 16px' }}>← Back to Materials</button>
+    <div style={{ padding: '20px', backgroundColor: currentTheme.bg, color: currentTheme.text, minHeight: '100%' }}>
+      <button onClick={onBack} style={{ marginBottom: '20px', padding: '8px 16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>← Back to Materials</button>
 
-      <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '5px', marginBottom: '20px' }}>
+      <div style={{ padding: '15px', border: '1px solid ' + currentTheme.border, borderRadius: '5px', marginBottom: '20px', backgroundColor: currentTheme.hover }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
           <h2 style={{ margin: 0 }}>{material.name}</h2>
           {!editing && (
@@ -153,7 +157,7 @@ export default function MaterialDetail({ materialId, onBack }) {
           )}
         </div>
 
-        {message && <p style={{ padding: '8px', backgroundColor: '#ffffcc', border: '1px solid #cccc00', borderRadius: '3px', marginBottom: '12px' }}>{message}</p>}
+        {message && <p style={{ padding: '8px', backgroundColor: currentTheme.hover, border: '1px solid ' + currentTheme.border, borderRadius: '3px', marginBottom: '12px', color: currentTheme.text }}>{message}</p>}
 
         {field('Material Name', 'name')}
         {field('Material Type', 'material_type')}
@@ -178,10 +182,10 @@ export default function MaterialDetail({ materialId, onBack }) {
 
         {editing && (
           <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-            <button onClick={saveMaterial} style={{ padding: '8px 16px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
+            <button onClick={saveMaterial} style={{ padding: '8px 16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
               Save
             </button>
-            <button onClick={() => { setEditing(false); setEdited(material) }} style={{ padding: '8px 16px', backgroundColor: '#ccc', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
+            <button onClick={() => { setEditing(false); setEdited(material) }} style={{ padding: '8px 16px', backgroundColor: currentTheme.border, color: currentTheme.text, border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -189,26 +193,26 @@ export default function MaterialDetail({ materialId, onBack }) {
       </div>
 
       {/* Documentation section */}
-      <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '5px', marginBottom: '20px' }}>
+      <div style={{ padding: '15px', border: '1px solid ' + currentTheme.border, borderRadius: '5px', marginBottom: '20px', backgroundColor: currentTheme.hover }}>
         <h3 style={{ marginTop: 0 }}>Documentation ({documents.length})</h3>
         {documents.length === 0 ? (
-          <p style={{ color: '#666' }}>No documentation uploaded</p>
+          <p style={{ color: currentTheme.text }}>No documentation uploaded</p>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f0f0f0' }}>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Filename</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Uploaded</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th style={thStyle}>Filename</th>
+                <th style={thStyle}>Uploaded</th>
+                <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {documents.map(doc => (
                 <tr key={doc.id}>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doc.filename}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                    <button onClick={() => handleDownloadDoc(doc)} style={{ padding: '4px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}>Download</button>
+                  <td style={tdStyle}>{doc.filename}</td>
+                  <td style={tdStyle}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    <button onClick={() => handleDownloadDoc(doc)} style={{ padding: '4px 10px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}>Download</button>
                     <button onClick={() => handleDeleteDoc(doc.id)} style={{ padding: '4px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Delete</button>
                   </td>
                 </tr>
@@ -227,26 +231,26 @@ export default function MaterialDetail({ materialId, onBack }) {
       </div>
 
       {/* PO Documents section */}
-      <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '5px', marginBottom: '20px' }}>
+      <div style={{ padding: '15px', border: '1px solid ' + currentTheme.border, borderRadius: '5px', marginBottom: '20px', backgroundColor: currentTheme.hover }}>
         <h3 style={{ marginTop: 0 }}>PO Documents ({poFiles.length})</h3>
         {poFiles.length === 0 ? (
-          <p style={{ color: '#666' }}>No PO documents uploaded</p>
+          <p style={{ color: currentTheme.text }}>No PO documents uploaded</p>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f0f0f0' }}>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Filename</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Uploaded</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th style={thStyle}>Filename</th>
+                <th style={thStyle}>Uploaded</th>
+                <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {poFiles.map(po => (
                 <tr key={po.id}>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{po.filename}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{po.uploaded_at ? new Date(po.uploaded_at).toLocaleDateString() : 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                    <button onClick={() => handleDownloadPO(po)} style={{ padding: '4px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}>Download</button>
+                  <td style={tdStyle}>{po.filename}</td>
+                  <td style={tdStyle}>{po.uploaded_at ? new Date(po.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    <button onClick={() => handleDownloadPO(po)} style={{ padding: '4px 10px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}>Download</button>
                     <button onClick={() => handleDeletePO(po.id)} style={{ padding: '4px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Delete</button>
                   </td>
                 </tr>

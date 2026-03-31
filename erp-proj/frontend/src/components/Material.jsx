@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
+import { useTheme } from '../themeContext.jsx'
 
 export default function Material({ onSelectMaterial }) {
+  const { accentColor, currentTheme } = useTheme()
   const [materials, setMaterials] = useState([])
   const [showNewMaterialForm, setShowNewMaterialForm] = useState(false)
   const [newMaterial, setNewMaterial] = useState({
@@ -202,63 +204,67 @@ export default function Material({ onSelectMaterial }) {
     )
   })
 
+  const inputStyle = { padding: '6px', border: '1px solid ' + currentTheme.inputBorder, borderRadius: '3px', backgroundColor: currentTheme.input, color: currentTheme.text, fontSize: '14px', fontFamily: 'inherit' }
+  const thStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }
+  const tdStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }
+
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', color: currentTheme.text, backgroundColor: currentTheme.bg, minHeight: '100%' }}>
       <h1>Materials Inventory</h1>
 
       <button
         onClick={() => setShowNewMaterialForm(!showNewMaterialForm)}
-        style={{ marginBottom: '20px', padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+        style={{ marginBottom: '20px', padding: '10px 20px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
       >
         {showNewMaterialForm ? 'Cancel' : '+ Add New Material'}
       </button>
 
       {showNewMaterialForm && (
-        <div style={{ marginBottom: '30px', padding: '15px', border: '2px solid #0066cc', borderRadius: '5px' }}>
+        <div style={{ marginBottom: '30px', padding: '15px', border: '2px solid ' + accentColor, borderRadius: '5px', backgroundColor: currentTheme.bg }}>
           <h2>Add New Material</h2>
           <div style={{ marginBottom: '10px' }}>
             <label>Material Name *: </label>
-            <input type="text" name="name" value={newMaterial.name} onChange={handleMaterialChange} placeholder="e.g., Steel Sheet" required />
+            <input type="text" name="name" value={newMaterial.name} onChange={handleMaterialChange} placeholder="e.g., Steel Sheet" required style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Material Type: </label>
-            <input type="text" name="material_type" value={newMaterial.material_type} onChange={handleMaterialChange} placeholder="e.g., Carbon Steel" />
+            <input type="text" name="material_type" value={newMaterial.material_type} onChange={handleMaterialChange} placeholder="e.g., Carbon Steel" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Shape: </label>
-            <input type="text" name="shape" value={newMaterial.shape} onChange={handleMaterialChange} placeholder="e.g., Round Bar, Sheet, Tube" />
+            <input type="text" name="shape" value={newMaterial.shape} onChange={handleMaterialChange} placeholder="e.g., Round Bar, Sheet, Tube" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Diameter: </label>
-            <input type="text" name="diameter" value={newMaterial.diameter} onChange={handleMaterialChange} placeholder="e.g., 1.5in" />
+            <input type="text" name="diameter" value={newMaterial.diameter} onChange={handleMaterialChange} placeholder="e.g., 1.5in" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Length: </label>
-            <input type="text" name="length" value={newMaterial.length} onChange={handleMaterialChange} placeholder="e.g., 12ft" />
+            <input type="text" name="length" value={newMaterial.length} onChange={handleMaterialChange} placeholder="e.g., 12ft" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Width: </label>
-            <input type="text" name="width" value={newMaterial.width} onChange={handleMaterialChange} placeholder="e.g., 24in" />
+            <input type="text" name="width" value={newMaterial.width} onChange={handleMaterialChange} placeholder="e.g., 24in" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Height: </label>
-            <input type="text" name="height" value={newMaterial.height} onChange={handleMaterialChange} placeholder="e.g., 0.25in" />
+            <input type="text" name="height" value={newMaterial.height} onChange={handleMaterialChange} placeholder="e.g., 0.25in" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Quantity: </label>
-            <input type="number" name="quantity" value={newMaterial.quantity} onChange={handleMaterialChange} placeholder="e.g., 10" min="0" />
+            <input type="number" name="quantity" value={newMaterial.quantity} onChange={handleMaterialChange} placeholder="e.g., 10" min="0" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>PO Number: </label>
-            <input type="text" name="po_number" value={newMaterial.po_number} onChange={handleMaterialChange} placeholder="Purchase order number" />
+            <input type="text" name="po_number" value={newMaterial.po_number} onChange={handleMaterialChange} placeholder="Purchase order number" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Purchase Location: </label>
-            <input type="text" name="purchase_location" value={newMaterial.purchase_location} onChange={handleMaterialChange} placeholder="Where the material was purchased" />
+            <input type="text" name="purchase_location" value={newMaterial.purchase_location} onChange={handleMaterialChange} placeholder="Where the material was purchased" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Provider/Vendor Info: </label>
-            <input type="text" name="provider_info" value={newMaterial.provider_info} onChange={handleMaterialChange} placeholder="Vendor contact info" />
+            <input type="text" name="provider_info" value={newMaterial.provider_info} onChange={handleMaterialChange} placeholder="Vendor contact info" style={inputStyle} />
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label>Documentation: </label>
@@ -268,13 +274,13 @@ export default function Material({ onSelectMaterial }) {
             <label>Upload PO: </label>
             <input type="file" onChange={(e) => setNewMaterialPOFile(e.target.files[0])} accept=".pdf,.doc,.docx,.txt,.jpg,.png" />
           </div>
-          <button onClick={submitMaterial} style={{ padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
+          <button onClick={submitMaterial} style={{ padding: '10px 20px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
             Save Material
           </button>
         </div>
       )}
 
-      {message && <p style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#ffffcc', border: '1px solid #cccc00', borderRadius: '3px' }}>{message}</p>}
+      {message && <p style={{ marginBottom: '20px', padding: '10px', backgroundColor: currentTheme.hover, border: '1px solid ' + currentTheme.border, borderRadius: '3px', color: currentTheme.text }}>{message}</p>}
 
       <div style={{ marginBottom: '16px' }}>
         <button
@@ -294,7 +300,7 @@ export default function Material({ onSelectMaterial }) {
       </div>
 
       {showFilters && (
-        <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #aaa', borderRadius: '5px', backgroundColor: '#f9f9f9', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+        <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid ' + currentTheme.border, borderRadius: '5px', backgroundColor: currentTheme.hover, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
           {[
             ['Name', 'name'],
             ['Type', 'material_type'],
@@ -315,7 +321,7 @@ export default function Material({ onSelectMaterial }) {
                 value={filters[key]}
                 onChange={(e) => setFilters(prev => ({ ...prev, [key]: e.target.value }))}
                 placeholder={`Filter by ${label.toLowerCase()}...`}
-                style={{ width: '100%', padding: '5px', border: '1px solid #ccc', borderRadius: '3px', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '5px', border: '1px solid ' + currentTheme.inputBorder, borderRadius: '3px', boxSizing: 'border-box', backgroundColor: currentTheme.input, color: currentTheme.text, fontFamily: 'inherit' }}
               />
             </div>
           ))}
@@ -331,38 +337,38 @@ export default function Material({ onSelectMaterial }) {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f0f0f0' }}>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Name</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Type</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Shape</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Diameter</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Length</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Width</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Height</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Qty</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>PO #</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Purchase Location</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Provider</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Created</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th style={thStyle}>Name</th>
+                <th style={thStyle}>Type</th>
+                <th style={thStyle}>Shape</th>
+                <th style={thStyle}>Diameter</th>
+                <th style={thStyle}>Length</th>
+                <th style={thStyle}>Width</th>
+                <th style={thStyle}>Height</th>
+                <th style={thStyle}>Qty</th>
+                <th style={thStyle}>PO #</th>
+                <th style={thStyle}>Purchase Location</th>
+                <th style={thStyle}>Provider</th>
+                <th style={thStyle}>Created</th>
+                <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredMaterials.map(material => (
-                <tr key={material.id} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.name}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.material_type || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.shape || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.diameter || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.length || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.width || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.height || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.quantity ?? 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.po_number || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.purchase_location || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.provider_info || 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{material.created_at ? new Date(material.created_at).toLocaleDateString() : 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                <tr key={material.id} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = currentTheme.hover} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = currentTheme.bg}>
+                  <td style={tdStyle}>{material.name}</td>
+                  <td style={tdStyle}>{material.material_type || 'N/A'}</td>
+                  <td style={tdStyle}>{material.shape || 'N/A'}</td>
+                  <td style={tdStyle}>{material.diameter || 'N/A'}</td>
+                  <td style={tdStyle}>{material.length || 'N/A'}</td>
+                  <td style={tdStyle}>{material.width || 'N/A'}</td>
+                  <td style={tdStyle}>{material.height || 'N/A'}</td>
+                  <td style={tdStyle}>{material.quantity ?? 'N/A'}</td>
+                  <td style={tdStyle}>{material.po_number || 'N/A'}</td>
+                  <td style={tdStyle}>{material.purchase_location || 'N/A'}</td>
+                  <td style={tdStyle}>{material.provider_info || 'N/A'}</td>
+                  <td style={tdStyle}>{material.created_at ? new Date(material.created_at).toLocaleDateString() : 'N/A'}</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
                     <button
                       onClick={() => onSelectMaterial && onSelectMaterial(material.id)}
                       style={{ padding: '5px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}
@@ -390,76 +396,76 @@ export default function Material({ onSelectMaterial }) {
       )}
 
       {editing && (
-        <div style={{ marginTop: '30px', padding: '20px', border: '2px solid #ff9900', borderRadius: '5px', backgroundColor: '#fffacd' }}>
+        <div style={{ marginTop: '30px', padding: '20px', border: '2px solid #ff9900', borderRadius: '5px', backgroundColor: currentTheme.hover, color: currentTheme.text }}>
           <h2>Edit Material</h2>
           {materials.map(m => editing === m.id && (
             <div key={m.id}>
               <div style={{ marginBottom: '10px' }}>
                 <label>Name: </label>
-                <input value={m.name} onChange={(e) => { m.name = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.name} onChange={(e) => { m.name = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Type: </label>
-                <input value={m.material_type || ''} onChange={(e) => { m.material_type = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.material_type || ''} onChange={(e) => { m.material_type = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Shape: </label>
-                <input value={m.shape || ''} onChange={(e) => { m.shape = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.shape || ''} onChange={(e) => { m.shape = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Diameter: </label>
-                <input value={m.diameter || ''} onChange={(e) => { m.diameter = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.diameter || ''} onChange={(e) => { m.diameter = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Length: </label>
-                <input value={m.length || ''} onChange={(e) => { m.length = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.length || ''} onChange={(e) => { m.length = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Width: </label>
-                <input value={m.width || ''} onChange={(e) => { m.width = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.width || ''} onChange={(e) => { m.width = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Height: </label>
-                <input value={m.height || ''} onChange={(e) => { m.height = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.height || ''} onChange={(e) => { m.height = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Quantity: </label>
-                <input type="number" value={m.quantity ?? ''} min="0" onChange={(e) => { m.quantity = e.target.value; setMaterials([...materials]) }} />
+                <input type="number" value={m.quantity ?? ''} min="0" onChange={(e) => { m.quantity = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>PO Number: </label>
-                <input value={m.po_number || ''} onChange={(e) => { m.po_number = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.po_number || ''} onChange={(e) => { m.po_number = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Purchase Location: </label>
-                <input value={m.purchase_location || ''} onChange={(e) => { m.purchase_location = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.purchase_location || ''} onChange={(e) => { m.purchase_location = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
               <div style={{ marginBottom: '10px' }}>
                 <label>Provider Info: </label>
-                <input value={m.provider_info || ''} onChange={(e) => { m.provider_info = e.target.value; setMaterials([...materials]) }} />
+                <input value={m.provider_info || ''} onChange={(e) => { m.provider_info = e.target.value; setMaterials([...materials]) }} style={inputStyle} />
               </div>
 
               {/* Documentation upload section */}
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Upload Documentation:</label>
                 <input type="file" multiple onChange={(e) => setEditDocFiles(Array.from(e.target.files))} />
-                {editDocFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: '#555' }}>{editDocFiles.length} file(s) selected</span>}
+                {editDocFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: currentTheme.text }}>{editDocFiles.length} file(s) selected</span>}
               </div>
               {editMaterialDocs.length > 0 && (
                 <div style={{ marginBottom: '12px' }}>
                   <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Existing Documentation ({editMaterialDocs.length}):</label>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead><tr style={{ backgroundColor: '#f0f0f0' }}>
-                      <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Filename</th>
-                      <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Uploaded</th>
-                      <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Actions</th>
+                    <thead><tr>
+                      <th style={thStyle}>Filename</th>
+                      <th style={thStyle}>Uploaded</th>
+                      <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
                     </tr></thead>
                     <tbody>{editMaterialDocs.map(doc => (
                       <tr key={doc.id}>
-                        <td style={{ border: '1px solid #ddd', padding: '6px' }}>{doc.filename}</td>
-                        <td style={{ border: '1px solid #ddd', padding: '6px' }}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
-                        <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>
-                          <button onClick={() => downloadEditDoc(doc)} style={{ padding: '3px 8px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}>Download</button>
+                        <td style={tdStyle}>{doc.filename}</td>
+                        <td style={tdStyle}>{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>
+                          <button onClick={() => downloadEditDoc(doc)} style={{ padding: '3px 8px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}>Download</button>
                           <button onClick={() => deleteEditDoc(doc.id)} style={{ padding: '3px 8px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Delete</button>
                         </td>
                       </tr>
@@ -472,23 +478,23 @@ export default function Material({ onSelectMaterial }) {
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Upload PO Documents:</label>
                 <input type="file" multiple onChange={(e) => setEditPOFiles(Array.from(e.target.files))} />
-                {editPOFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: '#555' }}>{editPOFiles.length} file(s) selected</span>}
+                {editPOFiles.length > 0 && <span style={{ marginLeft: '8px', fontSize: '13px', color: currentTheme.text }}>{editPOFiles.length} file(s) selected</span>}
               </div>
               {editMaterialPOs.length > 0 && (
                 <div style={{ marginBottom: '12px' }}>
                   <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Existing PO Documents ({editMaterialPOs.length}):</label>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead><tr style={{ backgroundColor: '#f0f0f0' }}>
-                      <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Filename</th>
-                      <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'left' }}>Uploaded</th>
-                      <th style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>Actions</th>
+                    <thead><tr>
+                      <th style={thStyle}>Filename</th>
+                      <th style={thStyle}>Uploaded</th>
+                      <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
                     </tr></thead>
                     <tbody>{editMaterialPOs.map(po => (
                       <tr key={po.id}>
-                        <td style={{ border: '1px solid #ddd', padding: '6px' }}>{po.filename}</td>
-                        <td style={{ border: '1px solid #ddd', padding: '6px' }}>{po.uploaded_at ? new Date(po.uploaded_at).toLocaleDateString() : 'N/A'}</td>
-                        <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>
-                          <button onClick={() => downloadEditPO(po)} style={{ padding: '3px 8px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}>Download</button>
+                        <td style={tdStyle}>{po.filename}</td>
+                        <td style={tdStyle}>{po.uploaded_at ? new Date(po.uploaded_at).toLocaleDateString() : 'N/A'}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>
+                          <button onClick={() => downloadEditPO(po)} style={{ padding: '3px 8px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '5px' }}>Download</button>
                           <button onClick={() => deleteEditPO(po.id)} style={{ padding: '3px 8px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>Delete</button>
                         </td>
                       </tr>
@@ -497,10 +503,10 @@ export default function Material({ onSelectMaterial }) {
                 </div>
               )}
 
-              <button onClick={() => saveEdit(m.id)} style={{ padding: '8px 16px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '8px' }}>
+              <button onClick={() => saveEdit(m.id)} style={{ padding: '8px 16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '8px' }}>
                 Save
               </button>
-              <button onClick={() => { setEditing(null); setEditDocFiles([]); setEditPOFiles([]); setEditMaterialDocs([]); setEditMaterialPOs([]) }} style={{ padding: '8px 16px', backgroundColor: '#ccc', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
+              <button onClick={() => { setEditing(null); setEditDocFiles([]); setEditPOFiles([]); setEditMaterialDocs([]); setEditMaterialPOs([]) }} style={{ padding: '8px 16px', backgroundColor: currentTheme.border, border: 'none', borderRadius: '3px', cursor: 'pointer', color: currentTheme.text }}>
                 Cancel
               </button>
             </div>

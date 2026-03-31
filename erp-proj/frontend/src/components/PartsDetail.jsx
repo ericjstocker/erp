@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
+import { useTheme } from '../themeContext.jsx'
 
 export default function PartsDetail({ partId, onBack }) {
+  const { accentColor, currentTheme } = useTheme()
+  const thStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }
+  const tdStyle = { border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }
   const [part, setPart] = useState(null)
   const [jobs, setJobs] = useState([])
   const [customers, setCustomers] = useState([])
@@ -95,12 +99,12 @@ export default function PartsDetail({ partId, onBack }) {
   if (!part) return <div>Part not found</div>
 
   return (
-    <div style={{ padding: '20px' }}>
-      <button onClick={onBack} style={{ marginBottom: '20px', padding: '8px 16px' }}>← Back to Parts</button>
+    <div style={{ padding: '20px', backgroundColor: currentTheme.bg, color: currentTheme.text, minHeight: '100%' }}>
+      <button onClick={onBack} style={{ marginBottom: '20px', padding: '8px 16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>← Back to Parts</button>
 
       <h2>{part.name}</h2>
 
-      <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
+      <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid ' + currentTheme.border, borderRadius: '5px', backgroundColor: currentTheme.hover }}>
         <h3>Part Information</h3>
         <p><strong>Input Date:</strong> {part.created_at ? new Date(part.created_at).toLocaleDateString() : 'N/A'}</p>
         <p><strong>Updated:</strong> {part.updated_at ? new Date(part.updated_at).toLocaleDateString() : 'N/A'}</p>
@@ -111,31 +115,31 @@ export default function PartsDetail({ partId, onBack }) {
         <p><strong>Status:</strong> <span style={{ padding: '5px 10px', backgroundColor: part.status === 'completed' ? '#90EE90' : part.status === 'in-progress' ? '#FFD700' : '#FFB6C6', borderRadius: '3px' }}>{part.status}</span></p>
       </div>
 
-      <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
+      <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid ' + currentTheme.border, borderRadius: '5px', backgroundColor: currentTheme.hover }}>
         <h3>Blueprints ({blueprints.length})</h3>
 
-        {message && <p style={{ padding: '8px', backgroundColor: '#ffffcc', border: '1px solid #cccc00', borderRadius: '3px', marginBottom: '12px' }}>{message}</p>}
+        {message && <p style={{ padding: '8px', backgroundColor: currentTheme.hover, border: '1px solid ' + currentTheme.border, borderRadius: '3px', marginBottom: '12px', color: currentTheme.text }}>{message}</p>}
 
         {blueprints.length === 0 ? (
-          <p style={{ color: '#888' }}>No blueprints uploaded yet.</p>
+          <p style={{ color: currentTheme.text }}>No blueprints uploaded yet.</p>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f0f0f0' }}>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Filename</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Uploaded</th>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th style={thStyle}>Filename</th>
+                <th style={thStyle}>Uploaded</th>
+                <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {blueprints.map(bp => (
                 <tr key={bp.id}>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{bp.filename}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{bp.uploaded_at ? new Date(bp.uploaded_at).toLocaleString() : 'N/A'}</td>
-                  <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                  <td style={tdStyle}>{bp.filename}</td>
+                  <td style={tdStyle}>{bp.uploaded_at ? new Date(bp.uploaded_at).toLocaleString() : 'N/A'}</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
                     <button
                       onClick={() => handleDownload(bp)}
-                      style={{ padding: '5px 10px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}
+                      style={{ padding: '5px 10px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', marginRight: '6px' }}
                     >
                       Download
                     </button>
