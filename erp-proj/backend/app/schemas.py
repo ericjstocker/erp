@@ -47,6 +47,7 @@ class PartBase(BaseModel):
     material_type: Optional[str] = None
     material_size: Optional[str] = None
     status: Optional[str] = None
+    quantity: Optional[int] = None
     is_archived: Optional[bool] = False
 
 class PartCreate(PartBase):

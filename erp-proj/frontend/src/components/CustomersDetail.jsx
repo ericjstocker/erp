@@ -7,6 +7,7 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
   const [customer, setCustomer] = useState(null)
   const [jobs, setJobs] = useState([])
   const [parts, setParts] = useState([])
+  const [materials, setMaterials] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editing, setEditing] = useState(false)
@@ -26,6 +27,9 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
 
       const jobsRes = await api.getCustomerJobs(customerId)
       setJobs(jobsRes || [])
+
+      const materialsRes = await api.listMaterials()
+      setMaterials(materialsRes || [])
 
       // Get all parts for these jobs
       const allParts = []
@@ -69,6 +73,9 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
   if (loading) return <div style={{ padding: '20px' }}>Loading...</div>
   if (error) return <div style={{ padding: '20px', color: 'red' }}>{error}</div>
   if (!customer) return <div style={{ padding: '20px' }}>Customer not found</div>
+
+  const getMaterialName = (matId) => { const m = materials.find(m => m.id === matId); return m ? m.name : 'N/A' }
+  const getMaterialShape = (matId) => { const m = materials.find(m => m.id === matId); return m ? (m.shape || 'N/A') : 'N/A' }
 
   return (
     <div style={{ padding: '20px', backgroundColor: currentTheme.bg, color: currentTheme.text, minHeight: '100%' }}>
@@ -199,8 +206,8 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
           <thead>
             <tr>
-              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Job ID</th>
               <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Job Name</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}># of Parts</th>
               <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Due Date</th>
               <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Status</th>
               <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Created</th>
@@ -209,13 +216,13 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
           <tbody>
             {jobs.map(job => (
               <tr key={job.id}>
-                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{job.id}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   <span
                     onClick={() => onSelectJob && onSelectJob(job.id)}
                     style={{ color: accentColor, cursor: 'pointer', textDecoration: 'underline' }}
                   >{job.name}</span>
                 </td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{parts.filter(p => p.job_id === job.id).length}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{job.due_date ? new Date(job.due_date).toLocaleDateString() : 'N/A'}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   <span style={{ 
@@ -242,9 +249,10 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Part ID</th>
               <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Part Name</th>
-              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Material Type</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Material Name</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Material Shape</th>
+              <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Quantity</th>
               <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Status</th>
               <th style={{ border: '1px solid ' + currentTheme.border, padding: '8px', textAlign: 'left', backgroundColor: currentTheme.hover, color: currentTheme.text }}>Job</th>
             </tr>
@@ -252,14 +260,15 @@ export default function CustomersDetail({ customerId, onBack, onSelectJob, onSel
           <tbody>
             {parts.map(part => (
               <tr key={part.id}>
-                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{part.id}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   <span
                     onClick={() => onSelectPart && onSelectPart(part.id)}
                     style={{ color: accentColor, cursor: 'pointer', textDecoration: 'underline' }}
                   >{part.name}</span>
                 </td>
-                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{part.material_type || 'N/A'}</td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{getMaterialName(part.material_id)}</td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{getMaterialShape(part.material_id)}</td>
+                <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>{part.quantity != null ? part.quantity : 'N/A'}</td>
                 <td style={{ border: '1px solid ' + currentTheme.border, padding: '8px', color: currentTheme.text }}>
                   <span style={{ 
                     padding: '4px 8px', 

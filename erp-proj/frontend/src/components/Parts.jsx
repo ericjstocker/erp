@@ -278,7 +278,8 @@ export default function Parts({ onSelectPart }) {
               <tr>
                 <th style={th}>Part Name</th>
                 <th style={th}>Material Name</th>
-                <th style={th}>Shape</th>
+                <th style={th}>Material Shape</th>
+                <th style={th}>Quantity</th>
                 <th style={th}>Job</th>
                 <th style={th}>Customer</th>
                 <th style={th}>Status</th>
@@ -292,6 +293,7 @@ export default function Parts({ onSelectPart }) {
                   <td style={td}>{p.name}</td>
                   <td style={td}>{getMaterialName(p.material_id)}</td>
                   <td style={td}>{getMaterialShape(p.material_id)}</td>
+                  <td style={td}>{p.quantity != null ? p.quantity : 'N/A'}</td>
                   <td style={td}>{getJobName(p.job_id)}</td>
                   <td style={td}>{getCustomerForJob(p.job_id)}</td>
                   <td style={td}>{p.status || 'N/A'}</td>

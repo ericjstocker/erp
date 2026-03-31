@@ -110,7 +110,8 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
             <tr>
               <th style={thStyle}>Part Name</th>
               <th style={thStyle}>Material Name</th>
-              <th style={thStyle}>Shape</th>
+              <th style={thStyle}>Material Shape</th>
+              <th style={thStyle}>Quantity</th>
               <th style={thStyle}>Status</th>
               <th style={thStyle}>Created</th>
             </tr>
@@ -126,6 +127,7 @@ export default function JobsDetail({ jobId, onBack, onSelectPart }) {
                 </td>
                 <td style={tdStyle}>{getMaterialName(part.material_id)}</td>
                 <td style={tdStyle}>{getMaterialShape(part.material_id)}</td>
+                <td style={tdStyle}>{part.quantity != null ? part.quantity : 'N/A'}</td>
                 <td style={tdStyle}>{part.status}</td>
                 <td style={tdStyle}>{new Date(part.created_at).toLocaleDateString()}</td>
               </tr>

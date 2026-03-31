@@ -45,6 +45,7 @@ class Part(Base):
     material_type = Column(String, nullable=True)
     material_size = Column(String, nullable=True)
     status = Column(String, default='pending')
+    quantity = Column(Integer, nullable=True)
     material_id = Column(Integer, ForeignKey('materials.id'), nullable=True)
     is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -7,6 +7,7 @@ export default function Home({ onSelectJob }) {
   const [activeJobs, setActiveJobs] = useState([])
   const [existingJobs, setExistingJobs] = useState([])
   const [existingCustomers, setExistingCustomers] = useState([])
+  const [existingParts, setExistingParts] = useState([])
   const [materials, setMaterials] = useState([])
   
   // Form state
@@ -31,7 +32,7 @@ export default function Home({ onSelectJob }) {
     poNumber: ''
   })
   
-  const [parts, setParts] = useState([{ name: '', status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
+  const [parts, setParts] = useState([{ name: '', quantity: 1, status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
   const [jobPOFiles, setJobPOFiles] = useState([])
   const [message, setMessage] = useState('')
 
@@ -41,21 +42,23 @@ export default function Home({ onSelectJob }) {
 
   const loadData = async () => {
     try {
-      const [jobsRes, customersRes, materialsRes] = await Promise.all([
+      const [jobsRes, customersRes, materialsRes, partsRes] = await Promise.all([
         api.listJobs(),
         api.listCustomers(),
-        api.listMaterials()
+        api.listMaterials(),
+        api.listParts()
       ])
       setExistingJobs(jobsRes)
       setActiveJobs(jobsRes.filter(j => j.status !== 'finished'))
       setExistingCustomers(customersRes)
       setMaterials(materialsRes)
+      setExistingParts(partsRes)
     } catch (err) {
       console.error('Error loading data:', err)
     }
   }
 
-  const emptyPart = () => ({ name: '', status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null })
+  const emptyPart = () => ({ name: '', quantity: 1, status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null })
 
   const handlePartChange = (index, field, value) => {
     const newParts = [...parts]
@@ -186,6 +189,7 @@ export default function Home({ onSelectJob }) {
         const partRes = await api.createPart({
           job_id: jobId,
           name: part.name,
+          quantity: part.quantity ? parseInt(part.quantity) : null,
           material_id: materialId,
           status: part.status
         })
@@ -205,7 +209,7 @@ export default function Home({ onSelectJob }) {
         setNewJob(false)
         setCustomerData({ id: '', name: '', point_of_contact: '', phone_number: '', email: '', notes: '' })
         setJobData({ id: '', name: '', description: '', dueDate: '', receivedDate: '', poNumber: '' })
-        setParts([{ name: '', status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
+        setParts([{ name: '', quantity: 1, status: 'pending', blueprint: null, newMaterial: false, materialId: '', newMaterialData: { name: '', material_type: '', shape: '', diameter: '', length: '', width: '', height: '', purchase_location: '' }, newMaterialPOFile: null }])
         setJobPOFiles([])
         loadData()
       }, 1500)
@@ -469,6 +473,18 @@ export default function Home({ onSelectJob }) {
                 />
               </div>
 
+              <div style={{ marginBottom: '10px', display: 'grid', gridTemplateColumns: '150px 1fr', gap: '10px', alignItems: 'center' }}>
+                <label style={{ fontWeight: 'bold' }}>Quantity:</label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                  value={part.quantity}
+                  onChange={(e) => handlePartChange(index, 'quantity', e.target.value)}
+                  style={{...inputStyle, width: '80px'}}
+                />
+              </div>
+
               {/* New Material? checkbox */}
               <div style={{ marginBottom: '10px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
@@ -580,12 +596,12 @@ export default function Home({ onSelectJob }) {
         {activeJobs.length === 0 ? (
           <p>No active jobs</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: currentTheme.hover }}>
-                <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>ID</th>
                 <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>Name</th>
                 <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>Customer</th>
+                <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}># of Parts</th>
                 <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>Status</th>
                 <th style={{ border: `1px solid ${accentColor}`, padding: '8px', textAlign: 'left' }}>Action</th>
               </tr>
@@ -593,9 +609,9 @@ export default function Home({ onSelectJob }) {
             <tbody>
               {activeJobs.map(job => (
                 <tr key={job.id}>
-                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.id}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.name}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{existingCustomers.find(c => c.id === job.customer_id)?.name || 'N/A'}</td>
+                  <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{existingParts.filter(p => p.job_id === job.id).length}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>{job.status}</td>
                   <td style={{ border: `1px solid ${accentColor}`, padding: '8px' }}>
                     <button onClick={() => onSelectJob(job.id)}>View</button>

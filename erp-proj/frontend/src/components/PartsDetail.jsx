@@ -112,6 +112,7 @@ export default function PartsDetail({ partId, onBack }) {
         <p><strong>Customer:</strong> {getCustomerForJob(part.job_id)}</p>
         <p><strong>Material Type:</strong> {part.material_type || 'N/A'}</p>
         <p><strong>Material Size:</strong> {part.material_size || 'N/A'}</p>
+        <p><strong>Quantity:</strong> {part.quantity != null ? part.quantity : 'N/A'}</p>
         <p><strong>Status:</strong> <span style={{ padding: '5px 10px', backgroundColor: part.status === 'completed' ? '#90EE90' : part.status === 'in-progress' ? '#FFD700' : '#FFB6C6', borderRadius: '3px' }}>{part.status}</span></p>
       </div>
 

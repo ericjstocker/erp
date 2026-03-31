@@ -253,6 +253,7 @@ export default function Jobs({ onSelectJob }) {
           <thead>
             <tr>
               <th style={thStyle}>Job Name</th>
+              <th style={thStyle}># of Parts</th>
               <th style={thStyle}>Customer</th>
               <th style={thStyle}>Due Date</th>
               <th style={thStyle}>Status</th>
@@ -264,6 +265,7 @@ export default function Jobs({ onSelectJob }) {
             {filteredJobs.map(j => (
               <tr key={j.id} style={{ cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = currentTheme.hover} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = currentTheme.bg}>
                 <td style={tdStyle}>{j.name}</td>
+                <td style={tdStyle}>{parts.filter(p => p.job_id === j.id).length}</td>
                 <td style={tdStyle}>{getCustomerName(j.customer_id)}</td>
                 <td style={tdStyle}>{j.due_date ? new Date(j.due_date).toLocaleDateString() : 'N/A'}</td>
                 <td style={tdStyle}>{j.status}</td>
